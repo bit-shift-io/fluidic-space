@@ -1,0 +1,8 @@
+[workspace]
+members = [
+    "./libphysics",
+    "./physics"
+]
+
+[profile.release]
+lto = true
