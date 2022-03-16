@@ -2,9 +2,11 @@ use sdl2::pixels::Color;
 use sdl2::event::Event;
 use sdl2::keyboard::Keycode;
 use sdl2::render::WindowCanvas;
+use sdl2::gfx::primitives::DrawRenderer;
 use std::time::Duration;
 
 mod third_party;
+mod basic_fluid;
 
 fn render(canvas: &mut WindowCanvas, color: Color) {
     canvas.set_draw_color(color);
@@ -18,6 +20,7 @@ fn render(canvas: &mut WindowCanvas, color: Color) {
 
 fn main() -> Result<(), String> {
     third_party::third_party_test();
+    basic_fluid::init_world();
 
     let sdl_context = sdl2::init()?;
     let video_subsystem = sdl_context.video()?;
