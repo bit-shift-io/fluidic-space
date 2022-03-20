@@ -1,3 +1,5 @@
+#![feature(portable_simd)]
+
 use sdl2::pixels::Color;
 use sdl2::event::Event;
 use sdl2::keyboard::Keycode;
