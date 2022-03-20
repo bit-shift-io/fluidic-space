@@ -5,6 +5,8 @@ flow v2
 
     run crates/install.sh to setup rust project
 
+    Make sure rust nnightly is installed: https://rust-lang.github.io/rustup/concepts/channels.html
+
 ## Development
 
 ### Manually

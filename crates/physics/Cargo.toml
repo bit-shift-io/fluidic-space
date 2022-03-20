@@ -19,7 +19,7 @@ default-features = false
 features = ["gfx"]
 
 
-[dependencies.salva2d]
-version = "0.7.0"
-default-features = false
-features = [ "rapier", "rapier-testbed", "sampling" ]
+#[dependencies.salva2d]
+#version = "0.7.0"
+#default-features = false
+#features = [ "rapier", "rapier-testbed", "sampling" ]
