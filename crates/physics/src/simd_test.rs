@@ -48,7 +48,10 @@ fn simd_add_assign(xs: &mut Vec<f32>, ys: &Vec<f32>) {
 
 struct SpatialHash {
     hash: Vec<f32>,
-    sz: Vec<u32>
+    sz: Vec<usize>,
+    x_size: usize,
+    y_size: usize,
+    bucket_size: usize
 }
 
 impl SpatialHash {
@@ -58,73 +61,112 @@ impl SpatialHash {
         SpatialHash {
             hash: vec![0.0; total_size],
             sz: vec![0; xy_size],
+            x_size,
+            y_size,
+            bucket_size
         }
     }
 
     // simd accelerated
-    fn add_points_simd(&self, pts: &Vec<f32>) {
-        println!(".");
+    fn add_points_simd(&mut self, pts: &Vec<f32>) {
+        // assert!(pts.len() multiple of 4)
+
+        let size = pts.len() as isize;
+        let chunks = size / 4;
+    
+        // treat f32 vector as an simd f32x4 vector
+        let ptr = pts.as_ptr() as *const f32x4;
+
+        //let simd_p_x = p_x as *mut f32x4;
+    
+        let size_mult: u32x4 = Simd::from_array([1, self.y_size as u32, 1, self.y_size as u32]);
+
+        // sum excess elements that don't fit in the simd vector
+        for i in 0..chunks {
+            // dereferencing a raw pointer requires an unsafe block
+            unsafe {
+                // offset by i elements
+                let fv: f32x4 = *ptr.offset(i);
+                let iv: u32x4 = fv.cast::<u32>(); //i32x4::from(fv); // fv;
+                let iv_size = iv * size_mult;
+
+                // can we simd this + operation?
+                // is there a conversion penalty from u32 to usize?
+                // if so, can we somehow avoid it by making the vector u32 referencable? 
+                let cell1 = (iv_size[0] + iv_size[1]) as usize;
+                let cell2 = (iv_size[2] + iv_size[3]) as usize;
+
+                //assert!(self.sz[cell1] < self.bucket_size);
+                self.sz[cell1] += 1;
+
+                //assert!(self.sz[cell2] < self.bucket_size);
+                self.sz[cell2] += 1;
+            }
+        }
     }
 
     // bog standard
-    fn add_points(&self, pts: &Vec<f32>) {
-        println!(".");
+    fn add_points(&mut self, pts: &Vec<f32>) {
+        for i in (0..pts.len()).step_by(2) {
+            let x = pts[i];
+            let y = pts[i+1];
+
+            //assert!(x >= 0.0);
+            //assert!(y >= 0.0);
+
+            let ix: usize = x as usize;
+            let iy: usize = y as usize;
+
+            //assert!(ix < self.x_size);
+            //assert!(iy < self.y_size);
+
+            let cell = ix + (iy * self.y_size);
+
+            //assert!(self.sz[cell] < self.bucket_size);
+            self.sz[cell] += 1;
+        }
     }
 }
 
-fn create_spatial_hash(x_size: usize, y_size: usize, bucket_size: usize) -> SpatialHash {
-    let total_size = x_size * y_size * bucket_size;
-    let xy_size = x_size * y_size;
-    SpatialHash {
-        hash: vec![0.0; total_size],
-        sz: vec![0; xy_size],
-    }
-    /*
-    let mut h: Vec<Vec<f32>> = vec![0; total_size];
-    for n in 1..total_size {
-        let b: Vec<f32> = vec![0; bucket_size];
-        h[n] = b;
-    } */
-    //return h;
-}
 
 pub fn simd_test() {
-    let h = SpatialHash::new(10, 10, 8); //create_spatial_hash(10, 10, 8);
+    let mut h = SpatialHash::new(8, 8, 8); //create_spatial_hash(10, 10, 8);
 
     // create an vector of random points
     let mut v0: Vec<f32> = Vec::new();
     let mut v1: Vec<f32> = Vec::new();
-    let range = Uniform::from(0.0..100.0);
+    let range = Uniform::from(0.0..8.0);
+
     let mut rng = rand::thread_rng();
-    for n in 1..100 {
-        let x = 1.0; //range.sample(&mut rng);
-        let y = 1.0; //range.sample(&mut rng);
+    for n in 1..8 {
+        let x = range.sample(&mut rng);
+        let y = range.sample(&mut rng);
 
         v0.push(x);
         v0.push(y);
     }
 
-    for n in 1..100 {
-        let x = 10.0; //range.sample(&mut rng);
-        let y = 10.0; //range.sample(&mut rng);
+    for n in 1..8 {
+        let x = range.sample(&mut rng);
+        let y = range.sample(&mut rng);
 
         v1.push(x);
         v1.push(y);
     }
 
-    {
+    {/*
         let start = Instant::now();
         simd_add_assign(&mut v0, &mut v1);
         let duration = start.elapsed();
         println!("simd_add_assign - {:?}ns", duration.as_nanos());
-    }
+    */}
 
-    {
+    {/*
         let start = Instant::now();
         add_assign(&mut v0, &mut v1);
         let duration = start.elapsed();
         println!("add_assign - {:?}ns", duration.as_nanos());
-    }
+    */}
 
     {
         let start = Instant::now();
