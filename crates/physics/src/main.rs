@@ -11,6 +11,8 @@ mod third_party;
 //mod basic_fluid;
 mod simd_test;
 
+mod spatial_hash;
+
 fn render(canvas: &mut WindowCanvas, color: Color) {
     canvas.set_draw_color(color);
     canvas.clear();
