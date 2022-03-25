@@ -52,6 +52,8 @@ pub fn simd_test() {
     let mut h1 = SpatialHash::new(8, 8, 8); //create_spatial_hash(10, 10, 8);
     let mut h2 = SpatialHash::new(8, 8, 8);
 
+    let mut v0 = h1.generate_random_points(2);
+/*
     // create an vector of random points
     let mut v0: Vec<f32> = Vec::new();
     let mut v1: Vec<f32> = Vec::new();
@@ -66,7 +68,7 @@ pub fn simd_test() {
         v0.push(y);
 
         println!("pt-{:?}: {:?},{:?}", n, x, y);
-    }
+    }*/
 
     /*
     for n in 1..8 {

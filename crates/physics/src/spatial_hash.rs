@@ -1,5 +1,7 @@
 use core_simd::*;
 use std::cmp;
+use rand::distributions::{Distribution, Uniform};
+use rand::Rng;
 //use std::collections::HashMap;
 
 /*
@@ -50,6 +52,31 @@ impl SpatialHash {
             y_size,
             bucket_size
         }
+    }
+
+    // because we can only fit 'bucket_size' points per cell
+    // we want a safe way to generate a set of points that will safely start the simulation off
+    pub fn generate_random_points(&self, count_per_bucket: usize) -> Vec<f32> {
+        let range = Uniform::from(0.0..1.0);
+        let mut rng = rand::thread_rng();
+        let mut pts: Vec<f32> = Vec::new();
+
+        for y in 0..self.y_size {
+            for x in 0..self.x_size {
+                for b in 0..cmp::max(1, (count_per_bucket / 2)) {
+
+                    let pt_x = range.sample(&mut rng) + (x as f32);
+                    let pt_y = range.sample(&mut rng) + (y as f32);
+
+                    pts.push(pt_x);
+                    pts.push(pt_y);
+
+                    println!("pt-{:?}: {:?},{:?}", pts.len() / 2, pt_x, pt_y);
+                }
+            }
+        }
+
+        return pts;
     }
 
     // simd accelerated
