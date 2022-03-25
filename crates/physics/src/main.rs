@@ -24,10 +24,10 @@ fn render(canvas: &mut WindowCanvas, color: Color) {
 }
 
 fn main() -> Result<(), String> {
-    third_party::third_party_test();
+    //third_party::third_party_test();
     //basic_fluid::init_world();
     simd_test::simd_test();
-
+/*
     let sdl_context = sdl2::init()?;
     let video_subsystem = sdl_context.video()?;
 
@@ -62,7 +62,7 @@ fn main() -> Result<(), String> {
         // Time management!
         ::std::thread::sleep(Duration::new(0, 1_000_000_000u32 / 60));
     }
-
+*/
     Ok(())
 }
 

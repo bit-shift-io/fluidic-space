@@ -58,7 +58,7 @@ pub fn simd_test() {
     let range = Uniform::from(0.0..8.0);
 
     let mut rng = rand::thread_rng();
-    for n in 1..8 {
+    for n in 0..8 {
         let x = range.sample(&mut rng);
         let y = range.sample(&mut rng);
 

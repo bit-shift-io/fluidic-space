@@ -1,4 +1,35 @@
 use core_simd::*;
+use std::cmp;
+//use std::collections::HashMap;
+
+/*
+#[derive(Hash, Eq, PartialEq, Debug)]
+struct PointIndexPair {
+    a: usize,
+    b: usize
+}
+
+impl PointIndexPair {
+    pub fn new(a: usize, b: usize) -> PointIndexPair {
+        if (a > b) {
+            PointIndexPair {
+                a,
+                b
+            }
+        } else {
+            PointIndexPair {
+                a: b,
+                b: a
+            }
+        }
+    }
+}
+*/
+
+struct CollisionResult {
+    collided: bool,
+    dist_squared: f32
+}
 
 pub struct SpatialHash {
     pts: Vec<f32>,
@@ -53,11 +84,11 @@ impl SpatialHash {
                 let bucket1_length = self.bucket_sz[cell1];
                 let bucket2_length = self.bucket_sz[cell2];
 
-                let bucket1_cell = cell1 + bucket1_length;
+                let bucket1_cell = (cell1 * self.bucket_size) + bucket1_length;
                 self.pts[bucket1_cell] = fv[0];
                 self.pts[bucket1_cell+1] = fv[1];
 
-                let bucket2_cell = cell2 + bucket2_length;
+                let bucket2_cell = (cell2 * self.bucket_size) + bucket2_length;
                 self.pts[bucket2_cell] = fv[2];
                 self.pts[bucket2_cell+1] = fv[3];
 
@@ -91,7 +122,7 @@ impl SpatialHash {
             let cell = ix + (iy * self.y_size);
             let bucket_length = self.bucket_sz[cell];
 
-            let bucket_cell = cell + bucket_length;
+            let bucket_cell = (cell * self.bucket_size) + bucket_length;
             self.pts[bucket_cell] = x;
             self.pts[bucket_cell+1] = y;
 
@@ -104,22 +135,96 @@ impl SpatialHash {
 
     // bog standard simulation step
     pub fn sim_step(&mut self, dt: f32) {
+        const radius: f32 = 1.0;
+        const dist_squared_max: f32 = radius * radius;
+
+        // TODO: so we currently have a problem where 
+        // because we iterate over all circles checking for collision with whats in the radius
+        // we end up double checking.
+        // so we need a structure to record what has been checked against what
+        // to avoid this.... some sort of hash
+        // this seems to slow down things a fair whack!
+        //let mut collision_pairs = HashMap::new();
+
         // for each x/y cell....
-        let xy_size = self.x_size * self.y_size;
-        for i in 0..xy_size {
-            let cell = i * self.bucket_size;
+        for y in 0..self.y_size {
+            for x in 0..self.x_size {
+                let cell = x * y * self.bucket_size;
 
-            // for each bucket within the x/y cell....
-            let bucket_length = self.bucket_sz[i];
-            for b in (0..bucket_length).step_by(2) {
-                let bucket_cell = cell + b;
+                // for each bucket within the x/y cell....
+                let bucket_length = self.bucket_sz[x + (y * self.y_size)];
+                for b in (0..bucket_length).step_by(2) {
+                    let bucket_cell = cell + b;
 
-                // get the position of the circle
-                let x = self.pts[bucket_cell];
-                let y = self.pts[bucket_cell+1];
+                    // get the position of the circle
+                    let pt_x = self.pts[bucket_cell];
+                    let pt_y = self.pts[bucket_cell+1];
 
-                // now do a radius check for other circles
-                println!("pt: {:?},{:?}", x, y);
+                    // now do a radius check for other circles
+                    println!("pt: {:?},{:?} from pts[{:?}]", pt_x, pt_y, bucket_cell);
+
+                    //
+                    // iterate over other cells & buckets to get other potential circle collisions
+                    // we only check from:
+                    //      1) the current cell -> left
+                    //      2) the current cell -> down
+                    // (i.e. the bottom right quadrant of the circle)
+                    // to avoid doubling up on collision checks
+                    //
+                    let y2_start = y; //if (y == 0) { 0 } else { y - 1 };
+                    let y2_end = cmp::min(self.y_size, y + 2);
+
+                    let x2_start = x; //if (x == 0) { 0 } else { x - 1 };
+                    let x2_end = cmp::min(self.x_size, x + 2);
+
+                    for y2 in y2_start..y2_end {
+                        for x2 in x2_start..x2_end {
+                            let cell2 = x2 * y2 * self.bucket_size;
+
+                            let bucket2_length = self.bucket_sz[x2 + (y2 * self.y_size)];
+                            for b2 in (0..bucket2_length).step_by(2) {
+                                // don't compare against ourself
+                                if (x2 == x && y2 == y && b2 == b) {
+                                    continue;
+                                }
+
+                                let bucket_cell2 = cell2 + b2;
+
+                                /*
+                                if (collision_pairs.contains_key(&PointIndexPair::new(bucket_cell, bucket_cell2))) {
+                                    println!("  pts[{:?}] already compared to pts[{:?}] - skipping comparison", bucket_cell, bucket_cell2);
+                                    continue;
+                                }*/
+                                
+                                //let bucket_cell2_is_even = if (bucket_cell2.rem_euclid(2)) { false } else { true };
+
+                                // get the position of the circle
+                                let pt_x2 = self.pts[bucket_cell2];
+                                let pt_y2 = self.pts[bucket_cell2+1];
+
+
+                                // now do a radius check for other circles
+                                print!("  compare against -> pt: {:?},{:?} from pts[{:?}]", pt_x, pt_y, bucket_cell2);
+
+                                // compute dist between
+                                let a = pt_x2 - pt_x;
+                                let b = pt_y2 - pt_y;
+                                let dist_squared = (a * a) + (b * b);
+                                if (dist_squared >= dist_squared_max) {
+                                    // no collision
+                                    //collision_pairs.insert(PointIndexPair::new(bucket_cell, bucket_cell2), CollisionResult{collided: false, dist_squared});
+                                    println!(" -> NO collision");
+                                    continue;
+                                }
+
+                                // collision!
+                                //collision_pairs.insert(PointIndexPair::new(bucket_cell, bucket_cell2), CollisionResult{collided: true, dist_squared});
+                                println!(" -> collision")
+                            }
+                        }
+                    }
+
+                }
             }
         }
     }
