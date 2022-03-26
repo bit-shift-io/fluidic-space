@@ -95,40 +95,54 @@ pub fn simd_test() {
         println!("add_assign - {:?}ns", duration.as_nanos());
     */}
 
-    println!("add_points ------------>");
+    
 
     {
+        println!("add_points ------------>");
         let start = Instant::now();
         h1.add_points(&v0);
         let duration = start.elapsed();
         println!("add_points - {:?}ns", duration.as_nanos());
     }
 
-    println!("add_points_simd ------------>");
-
     {
+        println!("add_points_simd ------------>");
         let start = Instant::now();
         h2.add_points_simd(&v0);
         let duration = start.elapsed();
         println!("add_points_simd - {:?}ns", duration.as_nanos());
     }
 
-    println!("sim_step ------------>");
-
     {
+        println!("update_velocity_from_collisions ------------>");
         let start = Instant::now();
-        h1.sim_step(0.1);
+        h1.update_velocity_from_collisions();
         let duration = start.elapsed();
-        println!("sim_step - {:?}ns", duration.as_nanos());
+        println!("update_velocity_from_collisions - {:?}ns", duration.as_nanos());
     }
 
-    println!("sim_step_simd ------------>");
+    {
+        println!("update_velocity_from_collisions_simd ------------>");
+        let start = Instant::now();
+        h2.update_velocity_from_collisions_simd();
+        let duration = start.elapsed();
+        println!("update_velocity_from_collisions_simd - {:?}ns", duration.as_nanos());
+    }
 
     {
+        println!("apply_velocity ------------>");
         let start = Instant::now();
-        h2.sim_step_simd(0.1);
+        h1.apply_velocity(1.0);
         let duration = start.elapsed();
-        println!("sim_step_simd - {:?}ns", duration.as_nanos());
+        println!("apply_velocity - {:?}ns", duration.as_nanos());
+    }
+
+    {
+        println!("apply_velocity_simd ------------>");
+        let start = Instant::now();
+        h1.apply_velocity_simd(1.0);
+        let duration = start.elapsed();
+        println!("apply_velocity_simd - {:?}ns", duration.as_nanos());
     }
 
     println!("benchmarking done -----------------------");
