@@ -1,8 +1,6 @@
 use core_simd::*;
 use std::cmp;
 use rand::distributions::{Distribution, Uniform};
-use rand::Rng;
-use std::ptr;
 use std::cell::RefCell;
 
 struct CollisionResult {
@@ -51,8 +49,8 @@ impl DoubleBuffer {
 
 pub struct SpatialHash {
     buffer: DoubleBuffer,
-    x_size: usize,
-    y_size: usize,
+    pub x_size: usize,
+    pub y_size: usize,
     bucket_size: usize,
     elasticity: f32, // when intersecting what to multiply velocity by. Lower means particles can squish together more
     damping: f32, // energy loss. Higher means velocity becomes more like viscous - honey. Lower more like water
@@ -81,7 +79,7 @@ impl SpatialHash {
 
         for y in 0..self.y_size {
             for x in 0..self.x_size {
-                for b in 0..cmp::max(1, (count_per_bucket / 2)) {
+                for b in 0..cmp::max(1, count_per_bucket / 2) {
 
                     let pt_x = range.sample(&mut rng) + (x as f32);
                     let pt_y = range.sample(&mut rng) + (y as f32);
@@ -228,7 +226,7 @@ impl SpatialHash {
                                 let bucket_cell2 = cell2 + b2;
 
                                 // don't compare against ourself
-                                if (bucket_cell == bucket_cell2) {
+                                if bucket_cell == bucket_cell2 {
                                     continue;
                                 }
 
@@ -244,7 +242,7 @@ impl SpatialHash {
                                 let a = pt_x2 - pt_x;
                                 let b = pt_y2 - pt_y;
                                 let dist_squared = (a * a) + (b * b);
-                                if (dist_squared >= dist_squared_max) {
+                                if dist_squared >= dist_squared_max {
                                     // no collision
                                     println!(" -> NO collision");
                                     continue;
@@ -265,6 +263,9 @@ impl SpatialHash {
 
                                 buff.vel[bucket_cell2] += vel_x;
                                 buff.vel[bucket_cell2+1] += vel_y;
+
+                                // TODO: oops! we have not accounted for the existing velocity of each 
+                                // circle, so they 'reflect' off of each other....
 
                                 println!("done");
                             }
@@ -327,5 +328,29 @@ impl SpatialHash {
     }
 
     pub fn apply_velocity_simd(&mut self, dt: f32) {
+    }
+
+    // can we do a simd version of this?
+    pub fn for_each_pos<F: Fn(f32, f32)>(&self, f: F) {
+        let mut buff = self.buffer.current.borrow_mut();
+        let mut next = self.buffer.next.borrow_mut();
+
+        for y in 0..self.y_size {
+            for x in 0..self.x_size {
+                let cell = x * y * self.bucket_size;
+
+                // for each bucket within the x/y cell....
+                let bucket_length = buff.bucket_sz[x + (y * self.y_size)];
+                for b in (0..bucket_length).step_by(2) {
+                    let bucket_cell = cell + b;
+
+                    // get the new position of the circle
+                    let pt_x = buff.pos[bucket_cell];
+                    let pt_y = buff.pos[bucket_cell+1];
+
+                    f(pt_x, pt_y);
+                }
+            }
+        }
     }
 }

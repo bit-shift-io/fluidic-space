@@ -2,8 +2,6 @@
 
 use std::time::Instant;
 use core_simd::*;
-use rand::distributions::{Distribution, Uniform};
-use rand::Rng;
 
 use crate::spatial_hash::*;
 
@@ -51,35 +49,8 @@ fn simd_add_assign(xs: &mut Vec<f32>, ys: &Vec<f32>) {
 pub fn simd_test() {
     let mut h1 = SpatialHash::new(8, 8, 8); //create_spatial_hash(10, 10, 8);
     let mut h2 = SpatialHash::new(8, 8, 8);
-
     let mut v0 = h1.generate_random_points(2);
-/*
-    // create an vector of random points
-    let mut v0: Vec<f32> = Vec::new();
-    let mut v1: Vec<f32> = Vec::new();
-    let range = Uniform::from(0.0..8.0);
 
-    let mut rng = rand::thread_rng();
-    for n in 0..8 {
-        let x = range.sample(&mut rng);
-        let y = range.sample(&mut rng);
-
-        v0.push(x);
-        v0.push(y);
-
-        println!("pt-{:?}: {:?},{:?}", n, x, y);
-    }*/
-
-    /*
-    for n in 1..8 {
-        let x = range.sample(&mut rng);
-        let y = range.sample(&mut rng);
-
-        v1.push(x);
-        v1.push(y);
-
-        println!("pt{:?}: {:?},{:?}", n, x, y);
-    }*/
 
     {/*
         let start = Instant::now();
