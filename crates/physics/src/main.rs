@@ -16,7 +16,7 @@ mod simd_test;
 
 mod spatial_hash;
 
-fn render(canvas: &mut WindowCanvas, color: Color, fluid_sim: &mut SpatialHash) {
+fn render(canvas: &mut WindowCanvas, fluid_sim: &mut SpatialHash) {
     canvas.set_draw_color(Color::RGBA(0, 0, 0, 255));
     canvas.clear();
 
@@ -62,15 +62,25 @@ fn render(canvas: &mut WindowCanvas, color: Color, fluid_sim: &mut SpatialHash) 
     canvas.present();
 }
 
+fn update(fluid_sim: &mut SpatialHash) {
+    fluid_sim.update_velocity_from_collisions();
+    fluid_sim.apply_velocity(0.1);
+
+    fluid_sim.swap();
+    fluid_sim.clear_next();
+
+    println!("updated");
+}
+
 fn main() -> Result<(), String> {
     //third_party::third_party_test();
     //basic_fluid::init_world();
-    simd_test::simd_test();
+    //simd_test::simd_test();
 
-    
-    let mut fluid_sim = SpatialHash::new(8, 8, 8);
-    let mut pts = fluid_sim.generate_random_points(2);
-    fluid_sim.add_points_simd(&pts);
+    let mut fluid_sim = SpatialHash::new(8, 8, 4 * 2);
+    //let mut pts = fluid_sim.generate_random_points(5);
+    let mut pts = vec![1.0, 1.0, 1.8, 1.8];
+    fluid_sim.add_points(&pts);
 
     let sdl_context = sdl2::init()?;
     let video_subsystem = sdl_context.video()?;
@@ -84,7 +94,6 @@ fn main() -> Result<(), String> {
         .expect("could not make a canvas");
 
     let mut event_pump = sdl_context.event_pump()?;
-    let mut i = 0;
     'running: loop {
         // Handle events
         for event in event_pump.poll_iter() {
@@ -98,13 +107,15 @@ fn main() -> Result<(), String> {
         }
 
         // Update
-        i = (i + 1) % 255;
+        update(&mut fluid_sim);
 
         // Render
-        render(&mut canvas, Color::RGB(i, 64, 255 - i), &mut fluid_sim);
+        render(&mut canvas, &mut fluid_sim);
 
         // Time management!
-        ::std::thread::sleep(Duration::new(0, 1_000_000_000u32 / 60));
+        //Duration::from_millis(1000)
+        ::std::thread::sleep(Duration::from_millis(1000));
+        //::std::thread::sleep(Duration::from::new(0, 1_000_000_000u32 / 60));
     }
 
     Ok(())

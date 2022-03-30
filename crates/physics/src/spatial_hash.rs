@@ -70,9 +70,28 @@ impl SpatialHash {
         }
     }
 
+    pub fn generate_random_points(&self, count: usize) -> Vec<f32> {
+        let range = Uniform::from(0.0..1.0);
+        let mut rng = rand::thread_rng();
+        let mut pts: Vec<f32> = Vec::new();
+
+        for b in 0..count {
+
+            let pt_x = range.sample(&mut rng) * (self.x_size as f32);
+            let pt_y = range.sample(&mut rng) * (self.y_size as f32);
+
+            pts.push(pt_x);
+            pts.push(pt_y);
+
+            println!("pt-{:?}: {:?},{:?}", pts.len() / 2, pt_x, pt_y);
+        }
+
+        return pts;
+    }
+
     // because we can only fit 'bucket_size' points per cell
     // we want a safe way to generate a set of points that will safely start the simulation off
-    pub fn generate_random_points(&self, count_per_bucket: usize) -> Vec<f32> {
+    pub fn generate_uniform_points(&self, count_per_bucket: usize) -> Vec<f32> {
         let range = Uniform::from(0.0..1.0);
         let mut rng = rand::thread_rng();
         let mut pts: Vec<f32> = Vec::new();
@@ -140,10 +159,10 @@ impl SpatialHash {
                 println!("add point: {:?},{:?} into pts[{:?}]", fv[0], fv[1], bucket1_cell);
                 println!("add point: {:?},{:?} into pts[{:?}]", fv[2], fv[3], bucket2_cell);
 
-                //assert!(buff.bucket_sz[cell1] < buff.bucket_size);
+                assert!(buff.bucket_sz[cell1] < self.bucket_size);
                 buff.bucket_sz[cell1] += 2;
 
-                //assert!(buff.bucket_sz[cell2] < buff.bucket_size);
+                assert!(buff.bucket_sz[cell2] < self.bucket_size);
                 buff.bucket_sz[cell2] += 2;
             }
         }
@@ -175,7 +194,7 @@ impl SpatialHash {
 
             println!("add point: {:?},{:?} into pts[{:?}]", x, y, bucket_cell);
 
-            //assert!(self.bucket_sz[cell] < self.bucket_size);
+            assert!(buff.bucket_sz[cell] < self.bucket_size);
             buff.bucket_sz[cell] += 2; // 2 floats
         }
     }
@@ -183,16 +202,17 @@ impl SpatialHash {
     // bog standard simulation step
     pub fn update_velocity_from_collisions(&mut self) {
         const radius: f32 = 1.0;
-        const dist_squared_max: f32 = radius * radius;
+        const dist_squared_max: f32 = (radius + radius) * (radius + radius);
         let mut buff = self.buffer.current.borrow_mut();
 
         // for each x/y cell....
-        for y in 0..self.y_size {
-            for x in 0..self.x_size {
-                let cell = x * y * self.bucket_size;
+        for iy in 0..self.y_size {
+            for ix in 0..self.x_size {
+                let mut cell = ix + (iy * self.y_size);
 
                 // for each bucket within the x/y cell....
-                let bucket_length = buff.bucket_sz[x + (y * self.y_size)];
+                let bucket_length = buff.bucket_sz[cell];
+                cell *= self.bucket_size;
                 for b in (0..bucket_length).step_by(2) {
                     let bucket_cell = cell + b;
 
@@ -211,17 +231,18 @@ impl SpatialHash {
                     // (i.e. the bottom right quadrant of the circle)
                     // to avoid doubling up on collision checks
                     //
-                    let y2_start = y;
-                    let y2_end = cmp::min(self.y_size, y + 2);
+                    let iy2_start = iy;
+                    let iy2_end = cmp::min(self.y_size, iy + 2);
 
-                    let x2_start = x;
-                    let x2_end = cmp::min(self.x_size, x + 2);
+                    let ix2_start = ix;
+                    let ix2_end = cmp::min(self.x_size, ix + 2);
 
-                    for y2 in y2_start..y2_end {
-                        for x2 in x2_start..x2_end {
-                            let cell2 = x2 * y2 * self.bucket_size;
+                    for iy2 in iy2_start..iy2_end {
+                        for ix2 in ix2_start..ix2_end {
+                            let mut cell2 = ix2 + (iy2 * self.y_size);
 
-                            let bucket2_length = buff.bucket_sz[x2 + (y2 * self.y_size)];
+                            let bucket2_length = buff.bucket_sz[cell2];
+                            cell2 *= self.bucket_size;
                             for b2 in (0..bucket2_length).step_by(2) {
                                 let bucket_cell2 = cell2 + b2;
 
@@ -286,12 +307,14 @@ impl SpatialHash {
         let mut buff = self.buffer.current.borrow_mut();
         let mut next = self.buffer.next.borrow_mut();
 
-        for y in 0..self.y_size {
-            for x in 0..self.x_size {
-                let cell = x * y * self.bucket_size;
+        // for each x/y cell....
+        for iy in 0..self.y_size {
+            for ix in 0..self.x_size {
+                let mut cell = ix + (iy * self.y_size);
 
                 // for each bucket within the x/y cell....
-                let bucket_length = buff.bucket_sz[x + (y * self.y_size)];
+                let bucket_length = buff.bucket_sz[cell];
+                cell *= self.bucket_size;
                 for b in (0..bucket_length).step_by(2) {
                     let bucket_cell = cell + b;
 
@@ -299,24 +322,37 @@ impl SpatialHash {
                     let pt_x = buff.pos[bucket_cell] + (buff.vel[bucket_cell] * dt);
                     let pt_y = buff.pos[bucket_cell+1] + (buff.vel[bucket_cell+1] * dt);
 
+                    // for now, when we leave the map, just let the particle die
+                    if pt_x < 0.0 || pt_y < 0.0 {
+                        println!("die!");
+                        continue;
+                    }
+
                     // spatial has the point
                     // and push it in to the next buffer 
-                    let ix: usize = pt_x as usize;
-                    let iy: usize = pt_y as usize;
+                    let rx: usize = pt_x as usize;
+                    let ry: usize = pt_y as usize;
+
+                    // for now, when we leave the map, just let the particle die
+                    if rx >= self.x_size || ry >= self.y_size {
+                        println!("die!");
+                        continue;
+                    }
+
 
                     //assert!(ix < self.x_size);
                     //assert!(iy < self.y_size);
 
-                    let cell = ix + (iy * self.y_size);
+                    let cell = rx + (ry * self.y_size);
                     let bucket_length = next.bucket_sz[cell];
 
                     let bucket_cell = (cell * self.bucket_size) + bucket_length;
                     next.pos[bucket_cell] = pt_x;
                     next.pos[bucket_cell+1] = pt_y;
 
-                    println!("add point: {:?},{:?} into pts[{:?}]", x, y, bucket_cell);
+                    println!("add point: {:?},{:?} into pts[{:?}]", ix, iy, bucket_cell);
 
-                    //assert!(self.bucket_sz[cell] < self.bucket_size);
+                    assert!(next.bucket_sz[cell] < self.bucket_size);
                     next.bucket_sz[cell] += 2; // 2 floats
 
                     // copy velocity over also
@@ -335,12 +371,14 @@ impl SpatialHash {
         let mut buff = self.buffer.current.borrow_mut();
         let mut next = self.buffer.next.borrow_mut();
 
-        for y in 0..self.y_size {
-            for x in 0..self.x_size {
-                let cell = x * y * self.bucket_size;
+        // for each x/y cell....
+        for iy in 0..self.y_size {
+            for ix in 0..self.x_size {
+                let mut cell = ix + (iy * self.y_size);
 
                 // for each bucket within the x/y cell....
-                let bucket_length = buff.bucket_sz[x + (y * self.y_size)];
+                let bucket_length = buff.bucket_sz[cell];
+                cell *= self.bucket_size;
                 for b in (0..bucket_length).step_by(2) {
                     let bucket_cell = cell + b;
 
@@ -352,5 +390,27 @@ impl SpatialHash {
                 }
             }
         }
+    }
+
+    // clear the current buffer
+    pub fn clear_next(&mut self) {
+        let mut next = self.buffer.next.borrow_mut();
+
+        // https://stackoverflow.com/questions/56114139/what-is-an-efficient-way-to-reset-all-values-of-a-vect-without-resizing-it
+        // really only need to clear bucket_sz array
+        // but clearing the others helps debugging
+        for item in &mut next.pos { *item = 0.0; }
+        for item in &mut next.vel { *item = 0.0; }
+        for item in &mut next.bucket_sz { *item = 0; }
+
+        //println!("cleared");
+    }
+
+    pub fn clear_next_simd(&mut self) {
+        // TODO
+    }
+
+    pub fn swap(&mut self) {
+        self.buffer.swap()
     }
 }
