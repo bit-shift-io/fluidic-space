@@ -64,7 +64,7 @@ fn render(canvas: &mut WindowCanvas, fluid_sim: &mut SpatialHash) {
 
 fn update(fluid_sim: &mut SpatialHash) {
     fluid_sim.update_velocity_from_collisions();
-    fluid_sim.apply_velocity(0.1);
+    fluid_sim.apply_velocity(0.01);
 
     fluid_sim.swap();
     fluid_sim.clear_next();

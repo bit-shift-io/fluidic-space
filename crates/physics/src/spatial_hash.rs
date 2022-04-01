@@ -343,21 +343,21 @@ impl SpatialHash {
                     //assert!(ix < self.x_size);
                     //assert!(iy < self.y_size);
 
-                    let cell = rx + (ry * self.y_size);
-                    let bucket_length = next.bucket_sz[cell];
+                    let to_cell = rx + (ry * self.y_size);
+                    let to_bucket_length = next.bucket_sz[to_cell];
 
-                    let bucket_cell = (cell * self.bucket_size) + bucket_length;
-                    next.pos[bucket_cell] = pt_x;
-                    next.pos[bucket_cell+1] = pt_y;
+                    let to_bucket_cell = (to_cell * self.bucket_size) + to_bucket_length;
+                    next.pos[to_bucket_cell] = pt_x;
+                    next.pos[to_bucket_cell+1] = pt_y;
 
-                    println!("add point: {:?},{:?} into pts[{:?}]", ix, iy, bucket_cell);
+                    println!("add point: {:?},{:?} into pts[{:?}]", pt_x, pt_y, to_bucket_cell);
 
-                    assert!(next.bucket_sz[cell] < self.bucket_size);
-                    next.bucket_sz[cell] += 2; // 2 floats
+                    assert!(next.bucket_sz[to_cell] < self.bucket_size);
+                    next.bucket_sz[to_cell] += 2; // 2 floats
 
                     // copy velocity over also
-                    next.vel[bucket_cell] = buff.vel[bucket_cell];
-                    next.vel[bucket_cell+1] = buff.vel[bucket_cell+1];
+                    next.vel[to_bucket_cell] = buff.vel[bucket_cell];
+                    next.vel[to_bucket_cell+1] = buff.vel[bucket_cell+1];
                 }
             }
         }
