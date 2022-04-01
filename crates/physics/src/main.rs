@@ -66,6 +66,7 @@ fn render(canvas: &mut WindowCanvas, fluid_sim: &mut SpatialHash) {
 
 fn update(fluid_sim: &mut SpatialHash) {
     fluid_sim.update_velocity_from_collisions();
+    fluid_sim.add_uniform_velocity(0.0, 0.1); // some gravity
     fluid_sim.apply_velocity(0.01);
 
     fluid_sim.swap();
@@ -80,13 +81,14 @@ fn main() -> Result<(), String> {
     //simd_test::simd_test();
 
     let mut fluid_sim = SpatialHash::new(16, 16, 4 * 2);
-    fluid_sim.collision_energy_loss = 0.5;
-    fluid_sim.elasticity = 1.0;
-    fluid_sim.damping = 1.0; //0.999;
+    //fluid_sim.collision_energy_loss = 0.5;
+    fluid_sim.elasticity = 0.2;
+    fluid_sim.damping = 0.99; //0.999;
 
-    let mut pts = fluid_sim.generate_random_points(10);
+    let mut pts = fluid_sim.generate_random_points(20);
     //let mut pts = vec![1.0, 1.0, 1.8, 1.8];
     //let mut pts = vec![1.5, 1.5, 3.3, 1.5];
+    //let mut pts = vec![2.5, 2.5, 1.5, 3.5];
     fluid_sim.add_points(&pts);
 
     let sdl_context = sdl2::init()?;

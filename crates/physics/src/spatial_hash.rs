@@ -214,6 +214,18 @@ impl SpatialHash {
 
                 // for each bucket within the x/y cell....
                 let bucket_length = buff.bucket_sz[cell];
+                if (bucket_length <= 0) {
+                    continue;
+                }
+
+                const cells_to_scan: usize = 3; // need to account for up to 2 * radius
+
+                let iy2_start = if (iy < cells_to_scan) { 0 } else { iy - cells_to_scan }; //cmp::max(iy - cells_to_scan, 0);
+                let iy2_end = cmp::min(self.y_size, iy + cells_to_scan);
+
+                let ix2_start = if (ix < cells_to_scan) { 0 } else { ix - cells_to_scan }; //cmp::max(ix - cells_to_scan, 0);
+                let ix2_end = cmp::min(self.x_size, ix + cells_to_scan);
+                
                 cell *= self.bucket_size;
                 for b in (0..bucket_length).step_by(2) {
                     let bucket_cell = cell + b;
@@ -236,12 +248,7 @@ impl SpatialHash {
                     // TODO: there are still bugs here allowing for 2 circles to get near each other
                     // without collision detection until BAM! collision with high energy
                     //
-                    const cells_to_scan: usize = 3; // need to account for up to 2 * radius
-                    let iy2_start = iy;
-                    let iy2_end = cmp::min(self.y_size, iy + cells_to_scan);
-
-                    let ix2_start = ix;
-                    let ix2_end = cmp::min(self.x_size, ix + cells_to_scan);
+                    
 
                     for iy2 in iy2_start..iy2_end {
                         for ix2 in ix2_start..ix2_end {
@@ -282,22 +289,27 @@ impl SpatialHash {
                                 let dist = dist_squared.sqrt();
                                 let dist_to_move = dist * 0.5;
 
+                                // as the points get closer, the velocity increases
+                                // exponentially
+                                // https://www.wolframalpha.com/input?i2d=true&i=plot+Divide%5B1%2Cx%5D
+                                let mut vel = 1.0 / dist;
+
                                 // lose or gain energy in the outgoing velocity
-                                let vel_x = (a / dist) * self.elasticity;
-                                let vel_y = (b / dist) * self.elasticity;
+                                let vel_x = (a / vel) * self.elasticity;
+                                let vel_y = (b / vel) * self.elasticity;
 
                                 // loose some energy from the incoming velocity
                                 buff.vel[bucket_cell] *= self.collision_energy_loss;
                                 buff.vel[bucket_cell+1] *= self.collision_energy_loss;
 
-                                buff.vel[bucket_cell2] *= self.collision_energy_loss;
-                                buff.vel[bucket_cell2+1] *= self.collision_energy_loss;
+                                //buff.vel[bucket_cell2] *= self.collision_energy_loss;
+                                //buff.vel[bucket_cell2+1] *= self.collision_energy_loss;
 
                                 buff.vel[bucket_cell] -= vel_x;
                                 buff.vel[bucket_cell+1] -= vel_y;
 
-                                buff.vel[bucket_cell2] += vel_x;
-                                buff.vel[bucket_cell2+1] += vel_y;
+                                //buff.vel[bucket_cell2] += vel_x;
+                                //buff.vel[bucket_cell2+1] += vel_y;
 
                                 //println!("done");
                             }
@@ -314,6 +326,32 @@ impl SpatialHash {
         
     }
 
+    // add uniform velocity to velocity of particles e.g. gravity
+    pub fn add_uniform_velocity(&mut self, vel_x: f32, vel_y: f32) {
+        let mut buff = self.buffer.current.borrow_mut();
+
+        // for each x/y cell....
+        for iy in 0..self.y_size {
+            for ix in 0..self.x_size {
+                let mut cell = ix + (iy * self.y_size);
+
+                // for each bucket within the x/y cell....
+                let bucket_length = buff.bucket_sz[cell];
+                if (bucket_length <= 0) {
+                    continue;
+                }
+
+                cell *= self.bucket_size;
+                for b in (0..bucket_length).step_by(2) {
+                    let bucket_cell = cell + b;
+
+                    buff.vel[bucket_cell] += vel_x;
+                    buff.vel[bucket_cell+1] += vel_y;
+                }
+            }
+        }
+    }
+
     pub fn apply_velocity(&mut self, dt: f32) {
         let mut buff = self.buffer.current.borrow_mut();
         let mut next = self.buffer.next.borrow_mut();
@@ -325,6 +363,10 @@ impl SpatialHash {
 
                 // for each bucket within the x/y cell....
                 let bucket_length = buff.bucket_sz[cell];
+                if (bucket_length <= 0) {
+                    continue;
+                }
+
                 cell *= self.bucket_size;
                 for b in (0..bucket_length).step_by(2) {
                     let bucket_cell = cell + b;
