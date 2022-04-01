@@ -214,16 +214,16 @@ impl SpatialHash {
 
                 // for each bucket within the x/y cell....
                 let bucket_length = buff.bucket_sz[cell];
-                if (bucket_length <= 0) {
+                if bucket_length <= 0 {
                     continue;
                 }
 
                 const cells_to_scan: usize = 3; // need to account for up to 2 * radius
 
-                let iy2_start = if (iy < cells_to_scan) { 0 } else { iy - cells_to_scan }; //cmp::max(iy - cells_to_scan, 0);
+                let iy2_start = if iy < cells_to_scan { 0 } else { iy - cells_to_scan }; //cmp::max(iy - cells_to_scan, 0);
                 let iy2_end = cmp::min(self.y_size, iy + cells_to_scan);
 
-                let ix2_start = if (ix < cells_to_scan) { 0 } else { ix - cells_to_scan }; //cmp::max(ix - cells_to_scan, 0);
+                let ix2_start = if ix < cells_to_scan { 0 } else { ix - cells_to_scan }; //cmp::max(ix - cells_to_scan, 0);
                 let ix2_end = cmp::min(self.x_size, ix + cells_to_scan);
                 
                 cell *= self.bucket_size;
@@ -337,7 +337,7 @@ impl SpatialHash {
 
                 // for each bucket within the x/y cell....
                 let bucket_length = buff.bucket_sz[cell];
-                if (bucket_length <= 0) {
+                if bucket_length <= 0 {
                     continue;
                 }
 
@@ -363,7 +363,7 @@ impl SpatialHash {
 
                 // for each bucket within the x/y cell....
                 let bucket_length = buff.bucket_sz[cell];
-                if (bucket_length <= 0) {
+                if bucket_length <= 0 {
                     continue;
                 }
 

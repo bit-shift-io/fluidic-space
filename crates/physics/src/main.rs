@@ -6,6 +6,7 @@ use sdl2::event::Event;
 use sdl2::keyboard::Keycode;
 use sdl2::render::WindowCanvas;
 use sdl2::gfx::primitives::DrawRenderer;
+use sdl2::video::WindowPos;
 use std::time::Duration;
 
 use crate::spatial_hash::*;
@@ -17,15 +18,19 @@ mod simd_test;
 mod spatial_hash;
 
 fn render(canvas: &mut WindowCanvas, fluid_sim: &mut SpatialHash) {
+
+    // set up scaling to render the grid to fit to window height
+    let window = canvas.window();
+    let (w_width, w_height) = window.size();
+    const padding: f32 = 20.0;
+    const x_offset: f32 = padding;
+    const y_offset: f32 = padding;
+    let scale: f32 = ((w_height as f32) - (padding * 2.0)) / (fluid_sim.y_size as f32);
+
+
+
     canvas.set_draw_color(Color::RGBA(0, 0, 0, 255));
     canvas.clear();
-
-
-    const scale: f32 = 20.0;
-
-    const x_offset: f32 = 10.0;
-    const y_offset: f32 = 10.0;
-
 
     // draw the boundary
     let width = (fluid_sim.x_size as f32 * scale) as u32;
@@ -94,10 +99,11 @@ fn main() -> Result<(), String> {
     let sdl_context = sdl2::init()?;
     let video_subsystem = sdl_context.video()?;
 
-    let window = video_subsystem.window("game tutorial", 800, 600)
-        .position_centered()
+    let mut window = video_subsystem.window("Fluidic Space - Fluid Dynamics", 800, 600)
+        //.position_centered()
         .build()
         .expect("could not initialize video subsystem");
+    window.set_position(WindowPos::Positioned(0), WindowPos::Positioned(0)); // easy to debug
 
     let mut canvas = window.into_canvas().build()
         .expect("could not make a canvas");
