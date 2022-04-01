@@ -78,8 +78,8 @@ fn main() -> Result<(), String> {
     //simd_test::simd_test();
 
     let mut fluid_sim = SpatialHash::new(8, 8, 4 * 2);
-    //let mut pts = fluid_sim.generate_random_points(5);
-    let mut pts = vec![1.0, 1.0, 1.8, 1.8];
+    let mut pts = fluid_sim.generate_random_points(10);
+    //let mut pts = vec![1.0, 1.0, 1.8, 1.8];
     fluid_sim.add_points(&pts);
 
     let sdl_context = sdl2::init()?;
@@ -114,7 +114,7 @@ fn main() -> Result<(), String> {
 
         // Time management!
         //Duration::from_millis(1000)
-        ::std::thread::sleep(Duration::from_millis(1000));
+        ::std::thread::sleep(Duration::from_millis(100));
         //::std::thread::sleep(Duration::from::new(0, 1_000_000_000u32 / 60));
     }
 

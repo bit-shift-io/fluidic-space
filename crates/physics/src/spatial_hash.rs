@@ -319,13 +319,26 @@ impl SpatialHash {
                     let bucket_cell = cell + b;
 
                     // get the new position of the circle
-                    let pt_x = buff.pos[bucket_cell] + (buff.vel[bucket_cell] * dt);
-                    let pt_y = buff.pos[bucket_cell+1] + (buff.vel[bucket_cell+1] * dt);
+                    let mut pt_x = buff.pos[bucket_cell] + (buff.vel[bucket_cell] * dt);
+                    let mut pt_y = buff.pos[bucket_cell+1] + (buff.vel[bucket_cell+1] * dt);
 
-                    // for now, when we leave the map, just let the particle die
-                    if pt_x < 0.0 || pt_y < 0.0 {
-                        println!("die!");
-                        continue;
+                    // for now, when we leave the map, reflect it
+                    if pt_y < 0.0 {
+                        buff.vel[bucket_cell+1] = -buff.vel[bucket_cell+1];
+                        pt_y = buff.pos[bucket_cell+1] + (buff.vel[bucket_cell+1] * dt);
+                    }
+                    else if (pt_y as usize) >= self.y_size {
+                        buff.vel[bucket_cell+1] = -buff.vel[bucket_cell+1];
+                        pt_y = buff.pos[bucket_cell+1] + (buff.vel[bucket_cell+1] * dt);
+                    }
+
+                    if pt_x < 0.0 {
+                        buff.vel[bucket_cell] = -buff.vel[bucket_cell];
+                        pt_x = buff.pos[bucket_cell] + (buff.vel[bucket_cell] * dt);
+                    }
+                    else if (pt_x as usize) >= self.x_size {
+                        buff.vel[bucket_cell] = -buff.vel[bucket_cell];
+                        pt_x = buff.pos[bucket_cell] + (buff.vel[bucket_cell] * dt);
                     }
 
                     // spatial has the point
@@ -333,11 +346,12 @@ impl SpatialHash {
                     let rx: usize = pt_x as usize;
                     let ry: usize = pt_y as usize;
 
+                    /*
                     // for now, when we leave the map, just let the particle die
                     if rx >= self.x_size || ry >= self.y_size {
                         println!("die!");
                         continue;
-                    }
+                    }*/
 
 
                     //assert!(ix < self.x_size);
