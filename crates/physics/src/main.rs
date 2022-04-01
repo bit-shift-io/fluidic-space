@@ -69,7 +69,7 @@ fn update(fluid_sim: &mut SpatialHash) {
     fluid_sim.swap();
     fluid_sim.clear_next();
 
-    println!("updated");
+    //println!("updated");
 }
 
 fn main() -> Result<(), String> {
@@ -80,6 +80,7 @@ fn main() -> Result<(), String> {
     let mut fluid_sim = SpatialHash::new(8, 8, 4 * 2);
     let mut pts = fluid_sim.generate_random_points(10);
     //let mut pts = vec![1.0, 1.0, 1.8, 1.8];
+    //let mut pts = vec![1.5, 1.5, 3.3, 1.5];
     fluid_sim.add_points(&pts);
 
     let sdl_context = sdl2::init()?;

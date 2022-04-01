@@ -221,7 +221,7 @@ impl SpatialHash {
                     let pt_y = buff.pos[bucket_cell+1];
 
                     // now do a radius check for other circles
-                    println!("pt: {:?},{:?} from pts[{:?}]", pt_x, pt_y, bucket_cell);
+                    //println!("pt: {:?},{:?} from pts[{:?}]", pt_x, pt_y, bucket_cell);
 
                     //
                     // iterate over other cells & buckets to get other potential circle collisions
@@ -231,11 +231,12 @@ impl SpatialHash {
                     // (i.e. the bottom right quadrant of the circle)
                     // to avoid doubling up on collision checks
                     //
+                    const cells_to_scan: usize = 3; // need to account for up to 2 * radius
                     let iy2_start = iy;
-                    let iy2_end = cmp::min(self.y_size, iy + 2);
+                    let iy2_end = cmp::min(self.y_size, iy + cells_to_scan);
 
                     let ix2_start = ix;
-                    let ix2_end = cmp::min(self.x_size, ix + 2);
+                    let ix2_end = cmp::min(self.x_size, ix + cells_to_scan);
 
                     for iy2 in iy2_start..iy2_end {
                         for ix2 in ix2_start..ix2_end {
@@ -257,7 +258,7 @@ impl SpatialHash {
 
 
                                 // now do a radius check for other circles
-                                print!("  compare against -> pt: {:?},{:?} from pts[{:?}]", pt_x, pt_y, bucket_cell2);
+                                //print!("  compare against -> pt: {:?},{:?} from pts[{:?}]", pt_x, pt_y, bucket_cell2);
 
                                 // compute dist between
                                 let a = pt_x2 - pt_x;
@@ -265,12 +266,12 @@ impl SpatialHash {
                                 let dist_squared = (a * a) + (b * b);
                                 if dist_squared >= dist_squared_max {
                                     // no collision
-                                    println!(" -> NO collision");
+                                    //println!(" -> NO collision");
                                     continue;
                                 }
 
                                 // collision!
-                                println!(" -> collision");
+                                //println!(" -> collision");
 
                                 // compute and apply velocity to each circle
                                 let dist = dist_squared.sqrt();
@@ -285,10 +286,7 @@ impl SpatialHash {
                                 buff.vel[bucket_cell2] += vel_x;
                                 buff.vel[bucket_cell2+1] += vel_y;
 
-                                // TODO: oops! we have not accounted for the existing velocity of each 
-                                // circle, so they 'reflect' off of each other....
-
-                                println!("done");
+                                //println!("done");
                             }
                         }
                     }
@@ -364,7 +362,7 @@ impl SpatialHash {
                     next.pos[to_bucket_cell] = pt_x;
                     next.pos[to_bucket_cell+1] = pt_y;
 
-                    println!("add point: {:?},{:?} into pts[{:?}]", pt_x, pt_y, to_bucket_cell);
+                    //println!("add point: {:?},{:?} into pts[{:?}]", pt_x, pt_y, to_bucket_cell);
 
                     assert!(next.bucket_sz[to_cell] < self.bucket_size);
                     next.bucket_sz[to_cell] += 2; // 2 floats
