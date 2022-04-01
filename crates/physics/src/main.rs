@@ -20,10 +20,12 @@ fn render(canvas: &mut WindowCanvas, fluid_sim: &mut SpatialHash) {
     canvas.set_draw_color(Color::RGBA(0, 0, 0, 255));
     canvas.clear();
 
-    const x_offset: f32 = 50.0;
-    const y_offset: f32 = 50.0;
 
-    const scale: f32 = 50.0;
+    const scale: f32 = 20.0;
+
+    const x_offset: f32 = 10.0;
+    const y_offset: f32 = 10.0;
+
 
     // draw the boundary
     let width = (fluid_sim.x_size as f32 * scale) as u32;
@@ -77,7 +79,11 @@ fn main() -> Result<(), String> {
     //basic_fluid::init_world();
     //simd_test::simd_test();
 
-    let mut fluid_sim = SpatialHash::new(8, 8, 4 * 2);
+    let mut fluid_sim = SpatialHash::new(16, 16, 4 * 2);
+    fluid_sim.collision_energy_loss = 0.5;
+    fluid_sim.elasticity = 1.0;
+    fluid_sim.damping = 1.0; //0.999;
+
     let mut pts = fluid_sim.generate_random_points(10);
     //let mut pts = vec![1.0, 1.0, 1.8, 1.8];
     //let mut pts = vec![1.5, 1.5, 3.3, 1.5];
@@ -115,7 +121,7 @@ fn main() -> Result<(), String> {
 
         // Time management!
         //Duration::from_millis(1000)
-        ::std::thread::sleep(Duration::from_millis(100));
+        ::std::thread::sleep(Duration::from_millis(10));
         //::std::thread::sleep(Duration::from::new(0, 1_000_000_000u32 / 60));
     }
 

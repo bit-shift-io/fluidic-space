@@ -52,8 +52,9 @@ pub struct SpatialHash {
     pub x_size: usize,
     pub y_size: usize,
     bucket_size: usize,
-    elasticity: f32, // when intersecting what to multiply velocity by. Lower means particles can squish together more
-    damping: f32, // energy loss. Higher means velocity becomes more like viscous - honey. Lower more like water
+    pub collision_energy_loss: f32, // when colliding, energy loss on velocity
+    pub elasticity: f32, // when intersecting what to multiply velocity by. Lower means particles can squish together more
+    pub damping: f32, // energy loss. Higher means velocity becomes more like viscous - honey. Lower more like water
 }
 
 impl SpatialHash {
@@ -65,6 +66,7 @@ impl SpatialHash {
             x_size,
             y_size,
             bucket_size,
+            collision_energy_loss: 1.0,
             elasticity: 1.0,
             damping: 1.0
         }
@@ -231,6 +233,9 @@ impl SpatialHash {
                     // (i.e. the bottom right quadrant of the circle)
                     // to avoid doubling up on collision checks
                     //
+                    // TODO: there are still bugs here allowing for 2 circles to get near each other
+                    // without collision detection until BAM! collision with high energy
+                    //
                     const cells_to_scan: usize = 3; // need to account for up to 2 * radius
                     let iy2_start = iy;
                     let iy2_end = cmp::min(self.y_size, iy + cells_to_scan);
@@ -277,8 +282,16 @@ impl SpatialHash {
                                 let dist = dist_squared.sqrt();
                                 let dist_to_move = dist * 0.5;
 
+                                // lose or gain energy in the outgoing velocity
                                 let vel_x = (a / dist) * self.elasticity;
                                 let vel_y = (b / dist) * self.elasticity;
+
+                                // loose some energy from the incoming velocity
+                                buff.vel[bucket_cell] *= self.collision_energy_loss;
+                                buff.vel[bucket_cell+1] *= self.collision_energy_loss;
+
+                                buff.vel[bucket_cell2] *= self.collision_energy_loss;
+                                buff.vel[bucket_cell2+1] *= self.collision_energy_loss;
 
                                 buff.vel[bucket_cell] -= vel_x;
                                 buff.vel[bucket_cell+1] -= vel_y;
@@ -368,8 +381,8 @@ impl SpatialHash {
                     next.bucket_sz[to_cell] += 2; // 2 floats
 
                     // copy velocity over also
-                    next.vel[to_bucket_cell] = buff.vel[bucket_cell];
-                    next.vel[to_bucket_cell+1] = buff.vel[bucket_cell+1];
+                    next.vel[to_bucket_cell] = buff.vel[bucket_cell] * self.damping;
+                    next.vel[to_bucket_cell+1] = buff.vel[bucket_cell+1] * self.damping;
                 }
             }
         }
