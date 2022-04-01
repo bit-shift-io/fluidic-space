@@ -19,6 +19,8 @@ mod spatial_hash;
 
 fn render(canvas: &mut WindowCanvas, fluid_sim: &mut SpatialHash) {
 
+    const draw_grid: bool = false;
+
     // set up scaling to render the grid to fit to window height
     let window = canvas.window();
     let (w_width, w_height) = window.size();
@@ -40,16 +42,18 @@ fn render(canvas: &mut WindowCanvas, fluid_sim: &mut SpatialHash) {
     canvas.set_draw_color(Color::RGBA(255, 0, 0, 255));
     canvas.draw_rect(rect);
 
-    canvas.set_draw_color(Color::RGBA(255, 0, 0, 100));
-    for y in 0..fluid_sim.y_size {
-        for x in 0..fluid_sim.x_size {
-            let x_start = (x as f32 * scale + x_offset) as i32;
-            let y_start = (y as f32 * scale + y_offset) as i32;
+    if (draw_grid) {
+        canvas.set_draw_color(Color::RGBA(255, 0, 0, 100));
+        for y in 0..fluid_sim.y_size {
+            for x in 0..fluid_sim.x_size {
+                let x_start = (x as f32 * scale + x_offset) as i32;
+                let y_start = (y as f32 * scale + y_offset) as i32;
 
-            let w = (1.0 * scale) as u32;
-            let h = (1.0 * scale) as u32;
-            let rect = Rect::new(x_start, y_start, w, h);
-            canvas.draw_rect(rect);
+                let w = (1.0 * scale) as u32;
+                let h = (1.0 * scale) as u32;
+                let rect = Rect::new(x_start, y_start, w, h);
+                canvas.draw_rect(rect);
+            }
         }
     }
 
@@ -85,12 +89,17 @@ fn main() -> Result<(), String> {
     //basic_fluid::init_world();
     //simd_test::simd_test();
 
-    let mut fluid_sim = SpatialHash::new(16, 16, 4 * 2);
+    const grid_size: usize = 100;
+    const particle_count: usize = 400;
+    const max_particles_per_cell: usize = 2;
+    const sleep_per_frame_ms: u64 = 0;
+
+    let mut fluid_sim = SpatialHash::new(grid_size, grid_size, max_particles_per_cell * 2);
     //fluid_sim.collision_energy_loss = 0.5;
-    fluid_sim.elasticity = 0.2;
+    fluid_sim.elasticity = 0.5;
     fluid_sim.damping = 0.99; //0.999;
 
-    let mut pts = fluid_sim.generate_random_points(20);
+    let mut pts = fluid_sim.generate_random_points(particle_count);
     //let mut pts = vec![1.0, 1.0, 1.8, 1.8];
     //let mut pts = vec![1.5, 1.5, 3.3, 1.5];
     //let mut pts = vec![2.5, 2.5, 1.5, 3.5];
@@ -129,7 +138,7 @@ fn main() -> Result<(), String> {
 
         // Time management!
         //Duration::from_millis(1000)
-        ::std::thread::sleep(Duration::from_millis(10));
+        ::std::thread::sleep(Duration::from_millis(sleep_per_frame_ms));
         //::std::thread::sleep(Duration::from::new(0, 1_000_000_000u32 / 60));
     }
 

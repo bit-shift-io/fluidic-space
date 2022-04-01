@@ -289,14 +289,19 @@ impl SpatialHash {
                                 let dist = dist_squared.sqrt();
                                 let dist_to_move = dist * 0.5;
 
+                                /*
+                                if (dist_to_move < 0.5) {
+                                    println!("to much intersection")
+                                }*/
+
                                 // as the points get closer, the velocity increases
                                 // exponentially
                                 // https://www.wolframalpha.com/input?i2d=true&i=plot+Divide%5B1%2Cx%5D
-                                let mut vel = 1.0 / dist;
+                                let mut vel = 1.0 / dist_to_move;
 
                                 // lose or gain energy in the outgoing velocity
-                                let vel_x = (a / vel) * self.elasticity;
-                                let vel_y = (b / vel) * self.elasticity;
+                                let vel_x = (a * vel) * self.elasticity;
+                                let vel_y = (b * vel) * self.elasticity;
 
                                 // loose some energy from the incoming velocity
                                 buff.vel[bucket_cell] *= self.collision_energy_loss;
