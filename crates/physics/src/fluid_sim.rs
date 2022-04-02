@@ -202,7 +202,7 @@ impl FluidSim {
 
             let cell = ix + (iy * self.y_size);
             let bucket_length = buff.bucket_sz[cell];
-            if (bucket_length >= self.bucket_size) {
+            if bucket_length >= self.bucket_size {
                 println!("can't add particle!");
                 continue;
             }
@@ -375,9 +375,34 @@ impl FluidSim {
         }
     }
 
+    // odly, this is consitently slower than the non-simd version!
     pub fn add_uniform_velocity_simd(&mut self, vel_x: f32, vel_y: f32) {
-        // TODO:
-        self.add_uniform_velocity(vel_x, vel_y);
+        let mut buff = self.buffer.current.borrow_mut();
+
+        let ptr = buff.vel.as_mut_ptr() as *mut f32x2;
+        let add_value: f32x2 = Simd::from_array([vel_x, vel_y]);
+        let half_bucket_size = self.bucket_size as isize / 2;
+
+        // for each x/y cell....
+        let xy_size = self.x_size * self.y_size;
+        for ixy in 0..xy_size {
+            if (buff.bucket_sz[ixy] <= 0) {
+                continue;
+            }
+
+            let cell = ixy as isize * half_bucket_size;
+
+            // for each bucket within the x/y cell....
+            let bucket_length = (buff.bucket_sz[ixy] as isize) / 2; // TODO: we can get ride of this by making vel and pos f32x2!
+
+            for i in cell..(cell+bucket_length) {
+                unsafe {
+                    *ptr.offset(i) += add_value;
+                }
+            }
+        }
+
+        //println!("done");
     }
 
     pub fn apply_velocity(&mut self, dt: f32) {

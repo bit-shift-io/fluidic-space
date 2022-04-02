@@ -24,7 +24,7 @@ fn render(canvas: &mut WindowCanvas, fluid_sim: &mut FluidSim) {
 
     // set up scaling to render the grid to fit to window height
     let window = canvas.window();
-    let (w_width, w_height) = window.size();
+    let (_w_width, w_height) = window.size();
     const padding: f32 = 20.0;
     const x_offset: f32 = padding;
     const y_offset: f32 = padding;
