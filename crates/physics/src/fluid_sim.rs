@@ -523,7 +523,7 @@ impl FluidSim {
 
                     //println!("add point: {:?},{:?} into pts[{:?}]", pt_x, pt_y, to_bucket_cell);
 
-                    assert!(next.bucket_sz[to_cell] < self.bucket_size);
+                    assert!(next.bucket_sz[to_cell] < self.bucket_size, "Too many points in the same bucket, either reduce elasticity or increase bucket size");
                     next.bucket_sz[to_cell] += 1;
 
                     // copy velocity over also

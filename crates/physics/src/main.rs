@@ -77,11 +77,11 @@ fn render(canvas: &mut WindowCanvas, fluid_sim: &mut FluidSim) {
 }
 
 fn update(fluid_sim: &mut FluidSim) {
-    const gravity: f32x2 = Simd::from_array([0.0, 0.1]);
+    const gravity: f32x2 = Simd::from_array([0.0, 0.3]);
 
     fluid_sim.update_velocity_from_collisions();
     fluid_sim.add_uniform_velocity(gravity); // some gravity
-    fluid_sim.apply_velocity(0.01);
+    fluid_sim.apply_velocity(0.005); // reducing this step increase sim stability
     fluid_sim.swap();
     fluid_sim.clear_next_simd(false);
 
@@ -94,14 +94,14 @@ fn main() -> Result<(), String> {
     simd_test::simd_test();
 
     const grid_size: usize = 100;
-    const particle_count: usize = 400;
+    const particle_count: usize = 1000;
     const max_particles_per_cell: usize = 2;
     const sleep_per_frame_ms: u64 = 0;
 
     let mut fluid_sim = FluidSim::new(grid_size, grid_size, max_particles_per_cell);
     //fluid_sim.collision_energy_loss = 0.5;
-    fluid_sim.elasticity = 0.5;
-    fluid_sim.damping = 0.99; //0.999;
+    fluid_sim.elasticity = 4.0;
+    fluid_sim.damping = 0.95; //0.999;
 
     let mut pts = fluid_sim.generate_random_points(particle_count);
     //let mut pts = vec![1.0, 1.0, 1.8, 1.8];
