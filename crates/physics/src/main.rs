@@ -87,7 +87,7 @@ fn update(fluid_sim: &mut SpatialHash) {
 fn main() -> Result<(), String> {
     //third_party::third_party_test();
     //basic_fluid::init_world();
-    //simd_test::simd_test();
+    simd_test::simd_test();
 
     const grid_size: usize = 100;
     const particle_count: usize = 400;

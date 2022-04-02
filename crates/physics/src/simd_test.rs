@@ -5,6 +5,7 @@ use core_simd::*;
 
 use crate::spatial_hash::*;
 
+/*
 // element-wise addition
 fn add_assign(xs: &mut Vec<f32>, ys: &Vec<f32>) {
     //assert_equal_len!(xs, ys);
@@ -45,12 +46,18 @@ fn simd_add_assign(xs: &mut Vec<f32>, ys: &Vec<f32>) {
         }
     }
 }
+*/
 
 pub fn simd_test() {
-    let mut h1 = SpatialHash::new(8, 8, 8); //create_spatial_hash(10, 10, 8);
-    let mut h2 = SpatialHash::new(8, 8, 8);
-    let mut v0 = h1.generate_random_points(2);
+    const grid_size: usize = 100;
+    const particle_count: usize = 400;
+    const max_particles_per_cell: usize = 2;
 
+    let mut h1 = SpatialHash::new(grid_size, grid_size, max_particles_per_cell * 2); //create_spatial_hash(10, 10, 8);
+    let mut h2 = SpatialHash::new(grid_size, grid_size, max_particles_per_cell * 2);
+    let mut pts = h1.generate_random_points(2);
+
+    println!("benchmarking start ----------------------->");
 
     {/*
         let start = Instant::now();
@@ -67,11 +74,10 @@ pub fn simd_test() {
     */}
 
     
-
     {
         println!("add_points ------------>");
         let start = Instant::now();
-        h1.add_points(&v0);
+        h1.add_points(&pts);
         let duration = start.elapsed();
         println!("add_points - {:?}ns", duration.as_nanos());
     }
@@ -79,7 +85,7 @@ pub fn simd_test() {
     {
         println!("add_points_simd ------------>");
         let start = Instant::now();
-        h2.add_points_simd(&v0);
+        h2.add_points_simd(&pts);
         let duration = start.elapsed();
         println!("add_points_simd - {:?}ns", duration.as_nanos());
     }
@@ -100,6 +106,23 @@ pub fn simd_test() {
         println!("update_velocity_from_collisions_simd - {:?}ns", duration.as_nanos());
     }
 
+
+    {
+        println!("add_uniform_velocity ------------>");
+        let start = Instant::now();
+        h1.add_uniform_velocity(0.0, 0.1); // some gravity
+        let duration = start.elapsed();
+        println!("add_uniform_velocity - {:?}ns", duration.as_nanos());
+    }
+
+    {
+        println!("add_uniform_velocity_simd ------------>");
+        let start = Instant::now();
+        h2.add_uniform_velocity_simd(0.0, 0.1); // some gravity
+        let duration = start.elapsed();
+        println!("add_uniform_velocity_simd - {:?}ns", duration.as_nanos());
+    }
+
     {
         println!("apply_velocity ------------>");
         let start = Instant::now();
@@ -111,10 +134,44 @@ pub fn simd_test() {
     {
         println!("apply_velocity_simd ------------>");
         let start = Instant::now();
-        h1.apply_velocity_simd(1.0);
+        h2.apply_velocity_simd(1.0);
         let duration = start.elapsed();
         println!("apply_velocity_simd - {:?}ns", duration.as_nanos());
     }
+
+    {
+        println!("swap ------------>");
+        let start = Instant::now();
+        h1.swap();
+        let duration = start.elapsed();
+        println!("swap - {:?}ns", duration.as_nanos());
+    }
+
+    {
+        println!("swap ------------>");
+        let start = Instant::now();
+        h2.swap();
+        let duration = start.elapsed();
+        println!("swap - {:?}ns", duration.as_nanos());
+    }
+
+    {
+        println!("clear_next ------------>");
+        let start = Instant::now();
+        h1.clear_next();
+        let duration = start.elapsed();
+        println!("clear_next - {:?}ns", duration.as_nanos());
+    }
+
+    {
+        println!("clear_next_simd ------------>");
+        let start = Instant::now();
+        h2.clear_next_simd();
+        let duration = start.elapsed();
+        println!("clear_next_simd - {:?}ns", duration.as_nanos());
+    }
+
+    // simd version fo foreach?
 
     println!("benchmarking done -----------------------");
 }

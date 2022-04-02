@@ -85,7 +85,7 @@ impl SpatialHash {
             pts.push(pt_x);
             pts.push(pt_y);
 
-            println!("pt-{:?}: {:?},{:?}", pts.len() / 2, pt_x, pt_y);
+            //println!("pt-{:?}: {:?},{:?}", pts.len() / 2, pt_x, pt_y);
         }
 
         return pts;
@@ -108,7 +108,7 @@ impl SpatialHash {
                     pts.push(pt_x);
                     pts.push(pt_y);
 
-                    println!("pt-{:?}: {:?},{:?}", pts.len() / 2, pt_x, pt_y);
+                    //println!("pt-{:?}: {:?},{:?}", pts.len() / 2, pt_x, pt_y);
                 }
             }
         }
@@ -121,6 +121,7 @@ impl SpatialHash {
         let mut buff = self.buffer.current.borrow_mut();
 
         // assert!(pts.len() multiple of 4)
+        // TODO: handle case where there is not a multiple of 4!
 
         let size = pts.len() as isize;
         let chunks = size / 4;
@@ -150,22 +151,32 @@ impl SpatialHash {
                 let bucket1_length = buff.bucket_sz[cell1];
                 let bucket2_length = buff.bucket_sz[cell2];
 
-                let bucket1_cell = (cell1 * self.bucket_size) + bucket1_length;
-                buff.pos[bucket1_cell] = fv[0];
-                buff.pos[bucket1_cell+1] = fv[1];
+                if (bucket1_length < self.bucket_size) {
+                    let bucket1_cell = (cell1 * self.bucket_size) + bucket1_length;
 
-                let bucket2_cell = (cell2 * self.bucket_size) + bucket2_length;
-                buff.pos[bucket2_cell] = fv[2];
-                buff.pos[bucket2_cell+1] = fv[3];
+                    buff.pos[bucket1_cell] = fv[0];
+                    buff.pos[bucket1_cell+1] = fv[1];
 
-                println!("add point: {:?},{:?} into pts[{:?}]", fv[0], fv[1], bucket1_cell);
-                println!("add point: {:?},{:?} into pts[{:?}]", fv[2], fv[3], bucket2_cell);
+                    assert!(buff.bucket_sz[cell1] < self.bucket_size);
+                    buff.bucket_sz[cell1] += 2;
 
-                assert!(buff.bucket_sz[cell1] < self.bucket_size);
-                buff.bucket_sz[cell1] += 2;
+                    //println!("add point: {:?},{:?} into pts[{:?}]", fv[0], fv[1], bucket1_cell);
+                } else {
+                    println!("can't add particle!");
+                }
 
-                assert!(buff.bucket_sz[cell2] < self.bucket_size);
-                buff.bucket_sz[cell2] += 2;
+                if (bucket2_length < self.bucket_size) {
+                    let bucket2_cell = (cell2 * self.bucket_size) + bucket2_length;
+                    buff.pos[bucket2_cell] = fv[2];
+                    buff.pos[bucket2_cell+1] = fv[3];
+
+                    assert!(buff.bucket_sz[cell2] < self.bucket_size);
+                    buff.bucket_sz[cell2] += 2;
+
+                    //println!("add point: {:?},{:?} into pts[{:?}]", fv[2], fv[3], bucket2_cell);
+                } else {
+                    println!("can't add particle!");
+                }                
             }
         }
     }
@@ -189,12 +200,16 @@ impl SpatialHash {
 
             let cell = ix + (iy * self.y_size);
             let bucket_length = buff.bucket_sz[cell];
+            if (bucket_length >= self.bucket_size) {
+                println!("can't add particle!");
+                continue;
+            }
 
             let bucket_cell = (cell * self.bucket_size) + bucket_length;
             buff.pos[bucket_cell] = x;
             buff.pos[bucket_cell+1] = y;
 
-            println!("add point: {:?},{:?} into pts[{:?}]", x, y, bucket_cell);
+            //println!("add point: {:?},{:?} into pts[{:?}]", x, y, bucket_cell);
 
             assert!(buff.bucket_sz[cell] < self.bucket_size);
             buff.bucket_sz[cell] += 2; // 2 floats
@@ -355,6 +370,9 @@ impl SpatialHash {
                 }
             }
         }
+    }
+
+    pub fn add_uniform_velocity_simd(&mut self, vel_x: f32, vel_y: f32) {
     }
 
     pub fn apply_velocity(&mut self, dt: f32) {
