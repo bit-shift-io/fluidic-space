@@ -57,6 +57,9 @@ pub fn simd_test() {
     let mut h2 = FluidSim::new(grid_size, grid_size, max_particles_per_cell * 2);
     let mut pts = h1.generate_random_points(2);
 
+    let mut standard_time = 0;
+    let mut simd_time = 0;
+    
     println!("benchmarking start ----------------------->");
 
     {/*
@@ -79,6 +82,7 @@ pub fn simd_test() {
         let start = Instant::now();
         h1.add_points(&pts);
         let duration = start.elapsed();
+        standard_time += duration.as_nanos();
         println!("add_points - {:?}ns", duration.as_nanos());
     }
 
@@ -87,6 +91,7 @@ pub fn simd_test() {
         let start = Instant::now();
         h2.add_points_simd(&pts);
         let duration = start.elapsed();
+        simd_time += duration.as_nanos();
         println!("add_points_simd - {:?}ns", duration.as_nanos());
     }
 
@@ -95,6 +100,7 @@ pub fn simd_test() {
         let start = Instant::now();
         h1.update_velocity_from_collisions();
         let duration = start.elapsed();
+        standard_time += duration.as_nanos();
         println!("update_velocity_from_collisions - {:?}ns", duration.as_nanos());
     }
 
@@ -103,6 +109,7 @@ pub fn simd_test() {
         let start = Instant::now();
         h2.update_velocity_from_collisions_simd();
         let duration = start.elapsed();
+        simd_time += duration.as_nanos();
         println!("update_velocity_from_collisions_simd - {:?}ns", duration.as_nanos());
     }
 
@@ -112,6 +119,7 @@ pub fn simd_test() {
         let start = Instant::now();
         h1.add_uniform_velocity(0.0, 0.1); // some gravity
         let duration = start.elapsed();
+        standard_time += duration.as_nanos();
         println!("add_uniform_velocity - {:?}ns", duration.as_nanos());
     }
 
@@ -120,6 +128,7 @@ pub fn simd_test() {
         let start = Instant::now();
         h2.add_uniform_velocity_simd(0.0, 0.1); // some gravity
         let duration = start.elapsed();
+        simd_time += duration.as_nanos();
         println!("add_uniform_velocity_simd - {:?}ns", duration.as_nanos());
     }
 
@@ -128,6 +137,7 @@ pub fn simd_test() {
         let start = Instant::now();
         h1.apply_velocity(1.0);
         let duration = start.elapsed();
+        standard_time += duration.as_nanos();
         println!("apply_velocity - {:?}ns", duration.as_nanos());
     }
 
@@ -136,6 +146,7 @@ pub fn simd_test() {
         let start = Instant::now();
         h2.apply_velocity_simd(1.0);
         let duration = start.elapsed();
+        simd_time += duration.as_nanos();
         println!("apply_velocity_simd - {:?}ns", duration.as_nanos());
     }
 
@@ -144,6 +155,7 @@ pub fn simd_test() {
         let start = Instant::now();
         h1.swap();
         let duration = start.elapsed();
+        standard_time += duration.as_nanos();
         println!("swap - {:?}ns", duration.as_nanos());
     }
 
@@ -152,6 +164,7 @@ pub fn simd_test() {
         let start = Instant::now();
         h2.swap();
         let duration = start.elapsed();
+        simd_time += duration.as_nanos();
         println!("swap - {:?}ns", duration.as_nanos());
     }
 
@@ -160,6 +173,7 @@ pub fn simd_test() {
         let start = Instant::now();
         h1.clear_next(false);
         let duration = start.elapsed();
+        standard_time += duration.as_nanos();
         println!("clear_next - {:?}ns", duration.as_nanos());
     }
 
@@ -168,10 +182,19 @@ pub fn simd_test() {
         let start = Instant::now();
         h2.clear_next_simd(false);
         let duration = start.elapsed();
+        simd_time += duration.as_nanos();
         println!("clear_next_simd - {:?}ns", duration.as_nanos());
     }
 
     // simd version fo foreach?
 
+    /*
+        To render at 30fps, we have a frame time of 33.333ms
+    */
+    println!("-----------------------");
+    let standard_time_ms = standard_time / 1000000;
+    let simd_time_ms = simd_time / 1000000;
+    println!("standard total  - {:?}ns     - {:?}ms", standard_time, standard_time_ms);
+    println!("simd total      - {:?}ns     - {:?}ms", simd_time, simd_time_ms);
     println!("benchmarking done -----------------------");
 }
