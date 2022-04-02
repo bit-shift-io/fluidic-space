@@ -79,7 +79,7 @@ fn update(fluid_sim: &mut FluidSim) {
     fluid_sim.apply_velocity(0.01);
 
     fluid_sim.swap();
-    fluid_sim.clear_next();
+    fluid_sim.clear_next_simd(false);
 
     //println!("updated");
 }

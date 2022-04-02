@@ -158,7 +158,7 @@ pub fn simd_test() {
     {
         println!("clear_next ------------>");
         let start = Instant::now();
-        h1.clear_next();
+        h1.clear_next(false);
         let duration = start.elapsed();
         println!("clear_next - {:?}ns", duration.as_nanos());
     }
@@ -166,7 +166,7 @@ pub fn simd_test() {
     {
         println!("clear_next_simd ------------>");
         let start = Instant::now();
-        h2.clear_next_simd();
+        h2.clear_next_simd(false);
         let duration = start.elapsed();
         println!("clear_next_simd - {:?}ns", duration.as_nanos());
     }

@@ -483,21 +483,54 @@ impl FluidSim {
     }
 
     // clear the current buffer
-    pub fn clear_next(&mut self) {
+    pub fn clear_next(&mut self, full_clear: bool) {
         let mut next = self.buffer.next.borrow_mut();
 
         // https://stackoverflow.com/questions/56114139/what-is-an-efficient-way-to-reset-all-values-of-a-vect-without-resizing-it
         // really only need to clear bucket_sz array
         // but clearing the others helps debugging
-        for item in &mut next.pos { *item = 0.0; }
-        for item in &mut next.vel { *item = 0.0; }
         for item in &mut next.bucket_sz { *item = 0; }
+
+        // should only need to specify full_clear to help when debubgging
+        if full_clear {
+            for item in &mut next.pos { *item = 0.0; }
+            for item in &mut next.vel { *item = 0.0; }
+        }
 
         //println!("cleared");
     }
 
-    pub fn clear_next_simd(&mut self) {
-        // TODO
+    pub fn clear_next_simd(&mut self, full_clear: bool) {
+        let mut next = self.buffer.next.borrow_mut();
+
+        let size = next.bucket_sz.len() as isize; //xy_size as isize;
+        let sizeof_usize = std::mem::size_of::<usize>() as isize;
+        let sizeof_usize2 = std::mem::size_of::<u32x4>() as isize;
+        let num_usize_per_simd = sizeof_usize2 / sizeof_usize;
+        let chunks = size / num_usize_per_simd;
+    
+        let ptr_m: *mut usize = next.bucket_sz.as_mut_ptr();
+
+        // treat vector as an simd u32x4 vector
+        let ptr = next.bucket_sz.as_mut_ptr() as *mut u32x4;
+        let clear_value: u32x4 = Simd::from_array([0, 0, 0, 0]);
+
+        for i in 0..chunks {
+            // dereferencing a raw pointer requires an unsafe block
+            unsafe {
+                // offset by i elements  
+                *ptr.offset(i) = clear_value;       
+            }
+        }
+
+        // excess elements that don't fit in the simd vector
+        for i in (4 * chunks)..size {
+            // dereferencing a raw pointer requires an unsafe block
+            unsafe {
+                // offset by i elements
+                *ptr_m.offset(i) = 0;
+            }
+        }
     }
 
     pub fn swap(&mut self) {
