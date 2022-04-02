@@ -57,7 +57,7 @@ fn render(canvas: &mut WindowCanvas, fluid_sim: &mut FluidSim) {
             }
         }
     }
-
+/*
     // https://rust-sdl2.github.io/rust-sdl2/sdl2/render/struct.Canvas.html#method.circle
     //canvas.circle(16, 16, 16, Color::RGBA(0, 0, 0, 255));
 
@@ -71,18 +71,19 @@ fn render(canvas: &mut WindowCanvas, fluid_sim: &mut FluidSim) {
         canvas.circle(x2 as i16, y2 as i16, radius as i16, Color::RGBA(0, 255, 0, 255));
     };
     fluid_sim.for_each_pos(render_c);
-
+*/
     canvas.present();
 }
 
 fn update(fluid_sim: &mut FluidSim) {
+    /*
     fluid_sim.update_velocity_from_collisions();
     fluid_sim.add_uniform_velocity(0.0, 0.1); // some gravity
     fluid_sim.apply_velocity(0.01);
 
     fluid_sim.swap();
     fluid_sim.clear_next_simd(false);
-
+*/
     //println!("updated");
 }
 
@@ -96,7 +97,7 @@ fn main() -> Result<(), String> {
     const max_particles_per_cell: usize = 2;
     const sleep_per_frame_ms: u64 = 0;
 
-    let mut fluid_sim = FluidSim::new(grid_size, grid_size, max_particles_per_cell * 2);
+    let mut fluid_sim = FluidSim::new(grid_size, grid_size, max_particles_per_cell);
     //fluid_sim.collision_energy_loss = 0.5;
     fluid_sim.elasticity = 0.5;
     fluid_sim.damping = 0.99; //0.999;

@@ -9,8 +9,8 @@ struct CollisionResult {
 }
 
 struct Buffer {
-    pos: Vec<f32>,
-    vel: Vec<f32>,
+    pos: Vec<f32x2>,
+    vel: Vec<f32x2>,
     bucket_sz: Vec<usize>,
 }
 
@@ -22,15 +22,17 @@ struct DoubleBuffer {
 
 impl DoubleBuffer {
     pub fn new(total_size: usize, xy_size: usize) -> DoubleBuffer {
+        let zero = Simd::from_array([0.0, 0.0]);
+
         let mut a = Buffer {
-            pos: vec![0.0; total_size],
-            vel: vec![0.0; total_size],
+            pos: vec![zero; total_size],
+            vel: vec![zero; total_size],
             bucket_sz: vec![0; xy_size],
         };
 
         let mut b = Buffer {
-            pos: vec![0.0; total_size],
-            vel: vec![0.0; total_size],
+            pos: vec![zero; total_size],
+            vel: vec![zero; total_size],
             bucket_sz: vec![0; xy_size],
         };
 
@@ -72,18 +74,17 @@ impl FluidSim {
         }
     }
 
-    pub fn generate_random_points(&self, count: usize) -> Vec<f32> {
+    pub fn generate_random_points(&self, count: usize) -> Vec<f32x2> {
         let range = Uniform::from(0.0..1.0);
         let mut rng = rand::thread_rng();
-        let mut pts: Vec<f32> = Vec::new();
+        let mut pts: Vec<f32x2> = Vec::new();
 
         for b in 0..count {
 
             let pt_x = range.sample(&mut rng) * (self.x_size as f32);
             let pt_y = range.sample(&mut rng) * (self.y_size as f32);
 
-            pts.push(pt_x);
-            pts.push(pt_y);
+            pts.push(Simd::from_array([pt_x, pt_y]));
 
             //println!("pt-{:?}: {:?},{:?}", pts.len() / 2, pt_x, pt_y);
         }
@@ -91,22 +92,23 @@ impl FluidSim {
         return pts;
     }
 
+    /*
     // because we can only fit 'bucket_size' points per cell
     // we want a safe way to generate a set of points that will safely start the simulation off
-    pub fn generate_uniform_points(&self, count_per_bucket: usize) -> Vec<f32> {
+    pub fn generate_uniform_points(&self, count_per_bucket: usize) -> Vec<f32x2> {
         let range = Uniform::from(0.0..1.0);
         let mut rng = rand::thread_rng();
         let mut pts: Vec<f32> = Vec::new();
 
         for y in 0..self.y_size {
             for x in 0..self.x_size {
-                for b in 0..cmp::max(1, count_per_bucket / 2) {
+                for b in 0..count_per_bucket {
 
                     let pt_x = range.sample(&mut rng) + (x as f32);
                     let pt_y = range.sample(&mut rng) + (y as f32);
 
-                    pts.push(pt_x);
-                    pts.push(pt_y);
+                    pts.push(Simd::from_array([pt_x, pt_y]));
+
 
                     //println!("pt-{:?}: {:?},{:?}", pts.len() / 2, pt_x, pt_y);
                 }
@@ -114,17 +116,17 @@ impl FluidSim {
         }
 
         return pts;
-    }
+    }*/
 
     // simd accelerated
-    pub fn add_points_simd(&mut self, pts: &Vec<f32>) {
+    pub fn add_points_simd(&mut self, pts: &Vec<f32x2>) {
         let mut buff = self.buffer.current.borrow_mut();
 
         // assert!(pts.len() multiple of 4)
         // TODO: handle case where there is not a multiple of 4!
 
         let size = pts.len() as isize;
-        let chunks = size / 4;
+        let chunks = size / 2;
     
         // treat f32 vector as an simd f32x4 vector
         let ptr = pts.as_ptr() as *const f32x4;
@@ -139,8 +141,10 @@ impl FluidSim {
             unsafe {
                 // offset by i elements
                 let fv: f32x4 = *ptr.offset(i);
-                let iv: u32x4 = fv.cast::<u32>(); //i32x4::from(fv); // fv;
+                let iv: u32x4 = fv.cast::<u32>();
                 let iv_size = iv * size_mult;
+
+                //let fv2: f32x2 = fv.cast::<f32x2>();
 
                 // can we simd this + operation?
                 // is there a conversion penalty from u32 to usize?
@@ -154,11 +158,11 @@ impl FluidSim {
                 if bucket1_length < self.bucket_size {
                     let bucket1_cell = (cell1 * self.bucket_size) + bucket1_length;
 
-                    buff.pos[bucket1_cell] = fv[0];
-                    buff.pos[bucket1_cell+1] = fv[1];
+                    buff.pos[bucket1_cell] = Simd::from_array([fv[0], fv[1]]);
+                    //buff.pos[bucket1_cell+1] = fv[1];
 
-                    assert!(buff.bucket_sz[cell1] < self.bucket_size);
-                    buff.bucket_sz[cell1] += 2;
+                    //assert!(buff.bucket_sz[cell1] < self.bucket_size);
+                    buff.bucket_sz[cell1] += 1;
 
                     //println!("add point: {:?},{:?} into pts[{:?}]", fv[0], fv[1], bucket1_cell);
                 } else {
@@ -167,16 +171,17 @@ impl FluidSim {
 
                 if bucket2_length < self.bucket_size {
                     let bucket2_cell = (cell2 * self.bucket_size) + bucket2_length;
-                    buff.pos[bucket2_cell] = fv[2];
-                    buff.pos[bucket2_cell+1] = fv[3];
+                    
+                    buff.pos[bucket2_cell] = Simd::from_array([fv[2], fv[3]]); //f2v[1];
+                    //buff.pos[bucket2_cell+1] = fv[3];
 
-                    assert!(buff.bucket_sz[cell2] < self.bucket_size);
-                    buff.bucket_sz[cell2] += 2;
+                    //assert!(buff.bucket_sz[cell2] < self.bucket_size);
+                    buff.bucket_sz[cell2] += 1;
 
                     //println!("add point: {:?},{:?} into pts[{:?}]", fv[2], fv[3], bucket2_cell);
                 } else {
                     println!("can't add particle!");
-                }                
+                }            
             }
         }
 
@@ -184,12 +189,18 @@ impl FluidSim {
     }
 
     // bog standard
-    pub fn add_points(&mut self, pts: &Vec<f32>) {
+    pub fn add_points(&mut self, pts: &Vec<f32x2>) {
         let mut buff = self.buffer.current.borrow_mut();
 
-        for i in (0..pts.len()).step_by(2) {
-            let x = pts[i];
-            let y = pts[i+1];
+        for i in 0..pts.len() {
+            let pt = pts[i];
+            let x = pt[0];
+            let y = pt[1];
+
+    
+            //let (x, y) = pts[i];
+            //let x = pts[i];
+            //let y = pts[i+1];
 
             //assert!(x >= 0.0);
             //assert!(y >= 0.0);
@@ -208,16 +219,16 @@ impl FluidSim {
             }
 
             let bucket_cell = (cell * self.bucket_size) + bucket_length;
-            buff.pos[bucket_cell] = x;
-            buff.pos[bucket_cell+1] = y;
+            buff.pos[bucket_cell] = pt;
+            //buff.pos[bucket_cell+1] = y;
 
             //println!("add point: {:?},{:?} into pts[{:?}]", x, y, bucket_cell);
 
             assert!(buff.bucket_sz[cell] < self.bucket_size);
-            buff.bucket_sz[cell] += 2; // 2 floats
+            buff.bucket_sz[cell] += 1;
         }
     }
-
+/*
     // bog standard simulation step
     pub fn update_velocity_from_collisions(&mut self) {
         const radius: f32 = 1.0;
@@ -571,7 +582,7 @@ impl FluidSim {
             }
         }
     }
-
+*/
     pub fn swap(&mut self) {
         self.buffer.swap()
     }

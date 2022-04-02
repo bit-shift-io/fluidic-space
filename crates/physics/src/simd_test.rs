@@ -94,7 +94,7 @@ pub fn simd_test() {
         simd_time += duration.as_nanos();
         println!("add_points_simd - {:?}ns", duration.as_nanos());
     }
-
+/*
     {
         println!("update_velocity_from_collisions ------------>");
         let start = Instant::now();
@@ -227,4 +227,5 @@ pub fn simd_test() {
     println!("standard total  - {:?}ns     - {:?}ms", standard_time, standard_time_ms);
     println!("simd total      - {:?}ns     - {:?}ms", simd_time, simd_time_ms);
     println!("benchmarking done -----------------------");
+    */
 }
