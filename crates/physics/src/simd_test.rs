@@ -188,7 +188,7 @@ pub fn simd_test() {
 
     // THIS IS HORRIBLY SLOW! rethink how we do this
     // simulate rendering of particles
-    let render_c = |x: f32, y: f32| {
+    let render_c = #[inline(always)] |x: f32, y: f32| {
         const scale: f32 = 1.0;
         const x_offset: f32 = 1.0;
         const y_offset: f32 = 1.0;
