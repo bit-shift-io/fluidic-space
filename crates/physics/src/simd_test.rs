@@ -3,7 +3,7 @@
 use std::time::Instant;
 use core_simd::*;
 
-use crate::spatial_hash::*;
+use crate::fluid_sim::*;
 
 /*
 // element-wise addition
@@ -53,8 +53,8 @@ pub fn simd_test() {
     const particle_count: usize = 400;
     const max_particles_per_cell: usize = 2;
 
-    let mut h1 = SpatialHash::new(grid_size, grid_size, max_particles_per_cell * 2); //create_spatial_hash(10, 10, 8);
-    let mut h2 = SpatialHash::new(grid_size, grid_size, max_particles_per_cell * 2);
+    let mut h1 = FluidSim::new(grid_size, grid_size, max_particles_per_cell * 2); //create_fluid_sim(10, 10, 8);
+    let mut h2 = FluidSim::new(grid_size, grid_size, max_particles_per_cell * 2);
     let mut pts = h1.generate_random_points(2);
 
     println!("benchmarking start ----------------------->");

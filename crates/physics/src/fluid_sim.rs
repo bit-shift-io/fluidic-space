@@ -47,7 +47,7 @@ impl DoubleBuffer {
     }
 }
 
-pub struct SpatialHash {
+pub struct FluidSim {
     buffer: DoubleBuffer,
     pub x_size: usize,
     pub y_size: usize,
@@ -57,11 +57,11 @@ pub struct SpatialHash {
     pub damping: f32, // energy loss. Higher means velocity becomes more like viscous - honey. Lower more like water
 }
 
-impl SpatialHash {
-    pub fn new(x_size: usize, y_size: usize, bucket_size: usize) -> SpatialHash {
+impl FluidSim {
+    pub fn new(x_size: usize, y_size: usize, bucket_size: usize) -> FluidSim {
         let total_size = x_size * y_size * bucket_size;
         let xy_size = x_size * y_size;
-        SpatialHash {
+        FluidSim {
             buffer: DoubleBuffer::new(total_size, xy_size),
             x_size,
             y_size,

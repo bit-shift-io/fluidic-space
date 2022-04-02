@@ -9,15 +9,15 @@ use sdl2::gfx::primitives::DrawRenderer;
 use sdl2::video::WindowPos;
 use std::time::Duration;
 
-use crate::spatial_hash::*;
+use crate::fluid_sim::*;
 
 mod third_party;
 //mod basic_fluid;
 mod simd_test;
 
-mod spatial_hash;
+mod fluid_sim;
 
-fn render(canvas: &mut WindowCanvas, fluid_sim: &mut SpatialHash) {
+fn render(canvas: &mut WindowCanvas, fluid_sim: &mut FluidSim) {
 
     const draw_grid: bool = false;
 
@@ -42,7 +42,7 @@ fn render(canvas: &mut WindowCanvas, fluid_sim: &mut SpatialHash) {
     canvas.set_draw_color(Color::RGBA(255, 0, 0, 255));
     canvas.draw_rect(rect);
 
-    if (draw_grid) {
+    if draw_grid {
         canvas.set_draw_color(Color::RGBA(255, 0, 0, 100));
         for y in 0..fluid_sim.y_size {
             for x in 0..fluid_sim.x_size {
@@ -73,7 +73,7 @@ fn render(canvas: &mut WindowCanvas, fluid_sim: &mut SpatialHash) {
     canvas.present();
 }
 
-fn update(fluid_sim: &mut SpatialHash) {
+fn update(fluid_sim: &mut FluidSim) {
     fluid_sim.update_velocity_from_collisions();
     fluid_sim.add_uniform_velocity(0.0, 0.1); // some gravity
     fluid_sim.apply_velocity(0.01);
@@ -94,7 +94,7 @@ fn main() -> Result<(), String> {
     const max_particles_per_cell: usize = 2;
     const sleep_per_frame_ms: u64 = 0;
 
-    let mut fluid_sim = SpatialHash::new(grid_size, grid_size, max_particles_per_cell * 2);
+    let mut fluid_sim = FluidSim::new(grid_size, grid_size, max_particles_per_cell * 2);
     //fluid_sim.collision_energy_loss = 0.5;
     fluid_sim.elasticity = 0.5;
     fluid_sim.damping = 0.99; //0.999;
