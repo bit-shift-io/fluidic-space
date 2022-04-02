@@ -122,27 +122,28 @@ impl FluidSim {
     pub fn add_points_simd(&mut self, pts: &Vec<f32x2>) {
         let mut buff = self.buffer.current.borrow_mut();
 
-        // assert!(pts.len() multiple of 4)
-        // TODO: handle case where there is not a multiple of 4!
-
         let size = pts.len() as isize;
         let chunks = size / 2;
     
         // treat f32 vector as an simd f32x4 vector
         let ptr = pts.as_ptr() as *const f32x4;
-
-        //let simd_p_x = p_x as *mut f32x4;
     
         let size_mult: u32x4 = Simd::from_array([1, self.y_size as u32, 1, self.y_size as u32]);
+        let size_mult_x2: u32x2 = Simd::from_array([1, self.y_size as u32]);
 
         // sum excess elements that don't fit in the simd vector
-        for i in 0..chunks {
-            // dereferencing a raw pointer requires an unsafe block
-            unsafe {
+        // dereferencing a raw pointer requires an unsafe block
+        unsafe {
+            for i in 0..chunks {
+            
                 // offset by i elements
                 let fv: f32x4 = *ptr.offset(i);
                 let iv: u32x4 = fv.cast::<u32>();
+                let f32ptr = ptr.offset(i) as *const f32x2;
                 let iv_size = iv * size_mult;
+
+                //simd_swizzle!(iv_size, [0, 1, 0, 0]);
+                //simd_swizzle!(iv_size, [2, 3, 0, 0]);
 
                 //let fv2: f32x2 = fv.cast::<f32x2>();
 
@@ -158,7 +159,7 @@ impl FluidSim {
                 if bucket1_length < self.bucket_size {
                     let bucket1_cell = (cell1 * self.bucket_size) + bucket1_length;
 
-                    buff.pos[bucket1_cell] = Simd::from_array([fv[0], fv[1]]);
+                    buff.pos[bucket1_cell] = *f32ptr.offset(0); //Simd::from_array([fv[0], fv[1]]);
                     //buff.pos[bucket1_cell+1] = fv[1];
 
                     //assert!(buff.bucket_sz[cell1] < self.bucket_size);
@@ -172,7 +173,7 @@ impl FluidSim {
                 if bucket2_length < self.bucket_size {
                     let bucket2_cell = (cell2 * self.bucket_size) + bucket2_length;
                     
-                    buff.pos[bucket2_cell] = Simd::from_array([fv[2], fv[3]]); //f2v[1];
+                    buff.pos[bucket2_cell] = *f32ptr.offset(1); //Simd::from_array([fv[2], fv[3]]); //f2v[1];
                     //buff.pos[bucket2_cell+1] = fv[3];
 
                     //assert!(buff.bucket_sz[cell2] < self.bucket_size);
@@ -181,11 +182,38 @@ impl FluidSim {
                     //println!("add point: {:?},{:?} into pts[{:?}]", fv[2], fv[3], bucket2_cell);
                 } else {
                     println!("can't add particle!");
-                }            
-            }
+                }  
+            }          
         }
 
-        // TODO: handle extras!
+        // handle excess elements that don't fit in the simd vector
+        // dereferencing a raw pointer requires an unsafe block
+        unsafe {
+            for i in (2 * chunks)..size {
+                let f32ptr = ptr.offset(i) as *const f32x2;
+                let fv: f32x2 = *f32ptr;
+                let iv: u32x2 = fv.cast::<u32>();
+                let iv_size = iv * size_mult_x2;
+
+                let cell1 = (iv_size[0] + iv_size[1]) as usize;
+
+                let bucket1_length = buff.bucket_sz[cell1];
+
+                if bucket1_length < self.bucket_size {
+                    let bucket1_cell = (cell1 * self.bucket_size) + bucket1_length;
+
+                    buff.pos[bucket1_cell] = fv; //Simd::from_array([fv[0], fv[1]]);
+                    //buff.pos[bucket1_cell+1] = fv[1];
+
+                    //assert!(buff.bucket_sz[cell1] < self.bucket_size);
+                    buff.bucket_sz[cell1] += 1;
+
+                    //println!("add point: {:?},{:?} into pts[{:?}]", fv[0], fv[1], bucket1_cell);
+                } else {
+                    println!("can't add particle!");
+                }
+            }
+        }
     }
 
     // bog standard
@@ -228,13 +256,14 @@ impl FluidSim {
             buff.bucket_sz[cell] += 1;
         }
     }
-/*
+
     // bog standard simulation step
     pub fn update_velocity_from_collisions(&mut self) {
         const radius: f32 = 1.0;
         const dist_squared_max: f32 = (radius + radius) * (radius + radius);
         let mut buff = self.buffer.current.borrow_mut();
 
+        // TODO: roll these loops into 1
         // for each x/y cell....
         for iy in 0..self.y_size {
             for ix in 0..self.x_size {
@@ -255,12 +284,12 @@ impl FluidSim {
                 let ix2_end = cmp::min(self.x_size, ix + cells_to_scan);
                 
                 cell *= self.bucket_size;
-                for b in (0..bucket_length).step_by(2) {
+                for b in 0..bucket_length {
                     let bucket_cell = cell + b;
 
                     // get the position of the circle
-                    let pt_x = buff.pos[bucket_cell];
-                    let pt_y = buff.pos[bucket_cell+1];
+                    let pt = buff.pos[bucket_cell];
+                    //let pt_y = buff.pos[bucket_cell+1];
 
                     // now do a radius check for other circles
                     //println!("pt: {:?},{:?} from pts[{:?}]", pt_x, pt_y, bucket_cell);
@@ -284,7 +313,7 @@ impl FluidSim {
 
                             let bucket2_length = buff.bucket_sz[cell2];
                             cell2 *= self.bucket_size;
-                            for b2 in (0..bucket2_length).step_by(2) {
+                            for b2 in 0..bucket2_length {
                                 let bucket_cell2 = cell2 + b2;
 
                                 // don't compare against ourself
@@ -293,17 +322,16 @@ impl FluidSim {
                                 }
 
                                 // get the position of the circle
-                                let pt_x2 = buff.pos[bucket_cell2];
-                                let pt_y2 = buff.pos[bucket_cell2+1];
+                                let pt2 = buff.pos[bucket_cell2];
+                                //let pt_y2 = buff.pos[bucket_cell2+1];
 
 
                                 // now do a radius check for other circles
                                 //print!("  compare against -> pt: {:?},{:?} from pts[{:?}]", pt_x, pt_y, bucket_cell2);
 
                                 // compute dist between
-                                let a = pt_x2 - pt_x;
-                                let b = pt_y2 - pt_y;
-                                let dist_squared = (a * a) + (b * b);
+                                let a = pt2 - pt;
+                                let dist_squared = (a[0] * a[0]) + (a[1] * a[1]);
                                 if dist_squared >= dist_squared_max {
                                     // no collision
                                     //println!(" -> NO collision");
@@ -325,21 +353,23 @@ impl FluidSim {
                                 // as the points get closer, the velocity increases
                                 // exponentially
                                 // https://www.wolframalpha.com/input?i2d=true&i=plot+Divide%5B1%2Cx%5D
-                                let mut vel = 1.0 / dist_to_move;
+                                let mut vel_mag = 1.0 / dist_to_move;
+
+                                let vel_m: f32x2 = Simd::from_array([vel_mag, vel_mag]);
 
                                 // lose or gain energy in the outgoing velocity
-                                let vel_x = (a * vel) * self.elasticity;
-                                let vel_y = (b * vel) * self.elasticity;
+                                let vel = (a * vel_m) * Simd::from_array([self.elasticity, self.elasticity]);
+                                //let vel_y = (a[1] * vel_mag) * self.elasticity;
 
                                 // loose some energy from the incoming velocity
-                                buff.vel[bucket_cell] *= self.collision_energy_loss;
-                                buff.vel[bucket_cell+1] *= self.collision_energy_loss;
+                                //buff.vel[bucket_cell] *= self.collision_energy_loss;
+                                //buff.vel[bucket_cell+1] *= self.collision_energy_loss;
 
                                 //buff.vel[bucket_cell2] *= self.collision_energy_loss;
                                 //buff.vel[bucket_cell2+1] *= self.collision_energy_loss;
 
-                                buff.vel[bucket_cell] -= vel_x;
-                                buff.vel[bucket_cell+1] -= vel_y;
+                                buff.vel[bucket_cell] -= vel;
+                                //buff.vel[bucket_cell+1] -= vel_y;
 
                                 //buff.vel[bucket_cell2] += vel_x;
                                 //buff.vel[bucket_cell2+1] += vel_y;
@@ -361,9 +391,10 @@ impl FluidSim {
     }
 
     // add uniform velocity to velocity of particles e.g. gravity
-    pub fn add_uniform_velocity(&mut self, vel_x: f32, vel_y: f32) {
+    pub fn add_uniform_velocity(&mut self, vel: f32x2) {
         let mut buff = self.buffer.current.borrow_mut();
 
+        // TODO: roll into 1 loop
         // for each x/y cell....
         for iy in 0..self.y_size {
             for ix in 0..self.x_size {
@@ -376,18 +407,23 @@ impl FluidSim {
                 }
 
                 cell *= self.bucket_size;
-                for b in (0..bucket_length).step_by(2) {
+                for b in 0..bucket_length {
                     let bucket_cell = cell + b;
 
-                    buff.vel[bucket_cell] += vel_x;
-                    buff.vel[bucket_cell+1] += vel_y;
+                    buff.vel[bucket_cell] += vel;
+                    //buff.vel[bucket_cell+1] += vel_y;
                 }
             }
         }
     }
 
     // odly, this is consitently slower than the non-simd version!
-    pub fn add_uniform_velocity_simd(&mut self, vel_x: f32, vel_y: f32) {
+    // how to make this f32x4?
+    pub fn add_uniform_velocity_simd(&mut self, vel: f32x2) {
+        // TODO:
+        self.add_uniform_velocity(vel);
+
+        /*
         let mut buff = self.buffer.current.borrow_mut();
 
         let ptr = buff.vel.as_mut_ptr() as *mut f32x2;
@@ -412,7 +448,7 @@ impl FluidSim {
                 }
             }
         }
-
+*/
         //println!("done");
     }
 
@@ -420,6 +456,10 @@ impl FluidSim {
         let mut buff = self.buffer.current.borrow_mut();
         let mut next = self.buffer.next.borrow_mut();
 
+        let v_dt: f32x2 = Simd::from_array([dt, dt]);
+        let v_damping: f32x2 = Simd::from_array([self.damping, self.damping]);
+
+        // TODO: roll this loop into 1
         // for each x/y cell....
         for iy in 0..self.y_size {
             for ix in 0..self.x_size {
@@ -432,36 +472,36 @@ impl FluidSim {
                 }
 
                 cell *= self.bucket_size;
-                for b in (0..bucket_length).step_by(2) {
+                for b in 0..bucket_length {
                     let bucket_cell = cell + b;
 
                     // get the new position of the circle
-                    let mut pt_x = buff.pos[bucket_cell] + (buff.vel[bucket_cell] * dt);
-                    let mut pt_y = buff.pos[bucket_cell+1] + (buff.vel[bucket_cell+1] * dt);
+                    let mut pt = buff.pos[bucket_cell] + (buff.vel[bucket_cell] * v_dt);
+                    //let mut pt_y = buff.pos[bucket_cell+1] + (buff.vel[bucket_cell+1] * dt);
 
                     // for now, when we leave the map, reflect it
-                    if pt_y < 0.0 {
-                        buff.vel[bucket_cell+1] = -buff.vel[bucket_cell+1];
-                        pt_y = buff.pos[bucket_cell+1] + (buff.vel[bucket_cell+1] * dt);
+                    if pt[1] < 0.0 {
+                        buff.vel[bucket_cell][1] = -buff.vel[bucket_cell][1];
+                        pt[1] = buff.pos[bucket_cell][1] + (buff.vel[bucket_cell][1] * dt);
                     }
-                    else if (pt_y as usize) >= self.y_size {
-                        buff.vel[bucket_cell+1] = -buff.vel[bucket_cell+1];
-                        pt_y = buff.pos[bucket_cell+1] + (buff.vel[bucket_cell+1] * dt);
+                    else if (pt[1] as usize) >= self.y_size {
+                        buff.vel[bucket_cell][1] = -buff.vel[bucket_cell][1];
+                        pt[1] = buff.pos[bucket_cell][1] + (buff.vel[bucket_cell][1] * dt);
                     }
 
-                    if pt_x < 0.0 {
-                        buff.vel[bucket_cell] = -buff.vel[bucket_cell];
-                        pt_x = buff.pos[bucket_cell] + (buff.vel[bucket_cell] * dt);
+                    if pt[0] < 0.0 {
+                        buff.vel[bucket_cell][0] = -buff.vel[bucket_cell][0];
+                        pt[0] = buff.pos[bucket_cell][0] + (buff.vel[bucket_cell][0] * dt);
                     }
-                    else if (pt_x as usize) >= self.x_size {
-                        buff.vel[bucket_cell] = -buff.vel[bucket_cell];
-                        pt_x = buff.pos[bucket_cell] + (buff.vel[bucket_cell] * dt);
+                    else if (pt[0] as usize) >= self.x_size {
+                        buff.vel[bucket_cell][0] = -buff.vel[bucket_cell][0];
+                        pt[0] = buff.pos[bucket_cell][0] + (buff.vel[bucket_cell][0] * dt);
                     }
 
                     // spatial has the point
                     // and push it in to the next buffer 
-                    let rx: usize = pt_x as usize;
-                    let ry: usize = pt_y as usize;
+                    let rx: usize = pt[0] as usize;
+                    let ry: usize = pt[1] as usize;
 
                     /*
                     // for now, when we leave the map, just let the particle die
@@ -478,17 +518,17 @@ impl FluidSim {
                     let to_bucket_length = next.bucket_sz[to_cell];
 
                     let to_bucket_cell = (to_cell * self.bucket_size) + to_bucket_length;
-                    next.pos[to_bucket_cell] = pt_x;
-                    next.pos[to_bucket_cell+1] = pt_y;
+                    next.pos[to_bucket_cell] = pt;
+                    //next.pos[to_bucket_cell+1] = pt_y;
 
                     //println!("add point: {:?},{:?} into pts[{:?}]", pt_x, pt_y, to_bucket_cell);
 
                     assert!(next.bucket_sz[to_cell] < self.bucket_size);
-                    next.bucket_sz[to_cell] += 2; // 2 floats
+                    next.bucket_sz[to_cell] += 1;
 
                     // copy velocity over also
-                    next.vel[to_bucket_cell] = buff.vel[bucket_cell] * self.damping;
-                    next.vel[to_bucket_cell+1] = buff.vel[bucket_cell+1] * self.damping;
+                    next.vel[to_bucket_cell] = buff.vel[bucket_cell] * v_damping;
+                    //next.vel[to_bucket_cell+1] = buff.vel[bucket_cell+1] * self.damping;
                 }
             }
         }
@@ -501,11 +541,12 @@ impl FluidSim {
 
     // THIS IS HORRIBLY SLOW! rethink how we do this
     // can we do a simd version of this?
-    pub fn for_each_pos<F: Fn(f32, f32)>(&self, f: F) {
+    pub fn for_each_pos<F: Fn(f32x2)>(&self, f: F) {
         let mut buff = self.buffer.current.borrow_mut();
         let mut next = self.buffer.next.borrow_mut();
 
-        // for each x/y cell....
+        // TODO: unroll this loop
+        // for each x/y cell.... fix this iteration down 2 1 loop
         for iy in 0..self.y_size {
             for ix in 0..self.x_size {
                 let mut cell = ix + (iy * self.y_size);
@@ -513,22 +554,22 @@ impl FluidSim {
                 // for each bucket within the x/y cell....
                 let bucket_length = buff.bucket_sz[cell];
                 cell *= self.bucket_size;
-                for b in (0..bucket_length).step_by(2) {
+                for b in 0..bucket_length {
                     let bucket_cell = cell + b;
 
                     // get the new position of the circle
-                    let pt_x = buff.pos[bucket_cell];
-                    let pt_y = buff.pos[bucket_cell+1];
+                    let pos = buff.pos[bucket_cell];
+                    //let pt_y = buff.pos[bucket_cell+1];
 
-                    f(pt_x, pt_y);
+                    f(pos);
                 }
             }
         }
     }
 
     // THIS IS HORRIBLY SLOW! rethink how we do this
-    pub fn for_each_pos_simd<F: Fn(f32, f32)>(&self, f: F) {
-        // TODO:
+    pub fn for_each_pos_simd<F: Fn(f32x2)>(&self, f: F) {
+        // TODO: process 2 at once!
         self.for_each_pos(f);
     }
 
@@ -543,8 +584,10 @@ impl FluidSim {
 
         // should only need to specify full_clear to help when debubgging
         if full_clear {
-            for item in &mut next.pos { *item = 0.0; }
-            for item in &mut next.vel { *item = 0.0; }
+            let clear_value: f32x2 = Simd::from_array([0.0, 0.0]);
+
+            for item in &mut next.pos { *item = clear_value; }
+            for item in &mut next.vel { *item = clear_value; }
         }
 
         //println!("cleared");
@@ -582,7 +625,7 @@ impl FluidSim {
             }
         }
     }
-*/
+
     pub fn swap(&mut self) {
         self.buffer.swap()
     }

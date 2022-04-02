@@ -11,6 +11,7 @@ use sdl2::video::WindowPos;
 use std::time::Duration;
 
 use crate::fluid_sim::*;
+use core_simd::*;
 
 mod third_party;
 //mod basic_fluid;
@@ -57,33 +58,33 @@ fn render(canvas: &mut WindowCanvas, fluid_sim: &mut FluidSim) {
             }
         }
     }
-/*
+
     // https://rust-sdl2.github.io/rust-sdl2/sdl2/render/struct.Canvas.html#method.circle
     //canvas.circle(16, 16, 16, Color::RGBA(0, 0, 0, 255));
 
     // THIS IS HORRIBLY SLOW! rethink how we do this
-    let render_c = #[inline(always)] |x: f32, y: f32| {
+    let render_c = #[inline(always)] |pt: f32x2| {
         // scale up to a visible range
         // this part could be simd accelerated?
-        let x2 = x * scale + x_offset;
-        let y2 = y * scale + y_offset;
+        let x2 = pt[0] * scale + x_offset;
+        let y2 = pt[1] * scale + y_offset;
         let radius = 1.0 * scale;
         canvas.circle(x2 as i16, y2 as i16, radius as i16, Color::RGBA(0, 255, 0, 255));
     };
     fluid_sim.for_each_pos(render_c);
-*/
+
     canvas.present();
 }
 
 fn update(fluid_sim: &mut FluidSim) {
-    /*
-    fluid_sim.update_velocity_from_collisions();
-    fluid_sim.add_uniform_velocity(0.0, 0.1); // some gravity
-    fluid_sim.apply_velocity(0.01);
+    const gravity: f32x2 = Simd::from_array([0.0, 0.1]);
 
+    fluid_sim.update_velocity_from_collisions();
+    fluid_sim.add_uniform_velocity(gravity); // some gravity
+    fluid_sim.apply_velocity(0.01);
     fluid_sim.swap();
     fluid_sim.clear_next_simd(false);
-*/
+
     //println!("updated");
 }
 

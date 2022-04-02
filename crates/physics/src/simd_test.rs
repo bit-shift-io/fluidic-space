@@ -4,6 +4,7 @@ use std::time::Instant;
 //use core_simd::*;
 
 use crate::fluid_sim::*;
+use core_simd::*;
 
 /*
 // element-wise addition
@@ -94,7 +95,7 @@ pub fn simd_test() {
         simd_time += duration.as_nanos();
         println!("add_points_simd - {:?}ns", duration.as_nanos());
     }
-/*
+
     {
         println!("update_velocity_from_collisions ------------>");
         let start = Instant::now();
@@ -113,11 +114,12 @@ pub fn simd_test() {
         println!("update_velocity_from_collisions_simd - {:?}ns", duration.as_nanos());
     }
 
+    const gravity: f32x2 = Simd::from_array([0.0, 0.1]);
 
     {
         println!("add_uniform_velocity ------------>");
         let start = Instant::now();
-        h1.add_uniform_velocity(0.0, 0.1); // some gravity
+        h1.add_uniform_velocity(gravity); // some gravity
         let duration = start.elapsed();
         standard_time += duration.as_nanos();
         println!("add_uniform_velocity - {:?}ns", duration.as_nanos());
@@ -126,7 +128,7 @@ pub fn simd_test() {
     {
         println!("add_uniform_velocity_simd ------------>");
         let start = Instant::now();
-        h2.add_uniform_velocity_simd(0.0, 0.1); // some gravity
+        h2.add_uniform_velocity_simd(gravity); // some gravity
         let duration = start.elapsed();
         simd_time += duration.as_nanos();
         println!("add_uniform_velocity_simd - {:?}ns", duration.as_nanos());
@@ -188,12 +190,12 @@ pub fn simd_test() {
 
     // THIS IS HORRIBLY SLOW! rethink how we do this
     // simulate rendering of particles
-    let render_c = #[inline(always)] |x: f32, y: f32| {
+    let render_c = #[inline(always)] |pt: f32x2| {
         const scale: f32 = 1.0;
         const x_offset: f32 = 1.0;
         const y_offset: f32 = 1.0;
-        let x2 = x * scale + x_offset;
-        let y2 = y * scale + y_offset;
+        let x2 = pt[0] * scale + x_offset;
+        let y2 = pt[1] * scale + y_offset;
         let radius = 1.0 * scale;
         // draw
     };
@@ -216,8 +218,6 @@ pub fn simd_test() {
         println!("for_each_pos_simd - {:?}ns", duration.as_nanos());
     }
 
-    // simd version fo foreach?
-
     /*
         To render at 30fps, we have a frame time of 33.333ms
     */
@@ -227,5 +227,4 @@ pub fn simd_test() {
     println!("standard total  - {:?}ns     - {:?}ms", standard_time, standard_time_ms);
     println!("simd total      - {:?}ns     - {:?}ms", simd_time, simd_time_ms);
     println!("benchmarking done -----------------------");
-    */
 }
