@@ -151,7 +151,7 @@ impl FluidSim {
                 let bucket1_length = buff.bucket_sz[cell1];
                 let bucket2_length = buff.bucket_sz[cell2];
 
-                if (bucket1_length < self.bucket_size) {
+                if bucket1_length < self.bucket_size {
                     let bucket1_cell = (cell1 * self.bucket_size) + bucket1_length;
 
                     buff.pos[bucket1_cell] = fv[0];
@@ -165,7 +165,7 @@ impl FluidSim {
                     println!("can't add particle!");
                 }
 
-                if (bucket2_length < self.bucket_size) {
+                if bucket2_length < self.bucket_size {
                     let bucket2_cell = (cell2 * self.bucket_size) + bucket2_length;
                     buff.pos[bucket2_cell] = fv[2];
                     buff.pos[bucket2_cell+1] = fv[3];
@@ -179,6 +179,8 @@ impl FluidSim {
                 }                
             }
         }
+
+        // TODO: handle extras!
     }
 
     // bog standard
@@ -343,7 +345,8 @@ impl FluidSim {
 
     // simd accelerated
     pub fn update_velocity_from_collisions_simd(&mut self) {
-        
+        // TODO:
+        self.update_velocity_from_collisions();
     }
 
     // add uniform velocity to velocity of particles e.g. gravity
@@ -373,6 +376,8 @@ impl FluidSim {
     }
 
     pub fn add_uniform_velocity_simd(&mut self, vel_x: f32, vel_y: f32) {
+        // TODO:
+        self.add_uniform_velocity(vel_x, vel_y);
     }
 
     pub fn apply_velocity(&mut self, dt: f32) {
@@ -454,8 +459,11 @@ impl FluidSim {
     }
 
     pub fn apply_velocity_simd(&mut self, dt: f32) {
+        // TODO:
+        self.apply_velocity(dt);
     }
 
+    // THIS IS HORRIBLY SLOW! rethink how we do this
     // can we do a simd version of this?
     pub fn for_each_pos<F: Fn(f32, f32)>(&self, f: F) {
         let mut buff = self.buffer.current.borrow_mut();
@@ -480,6 +488,12 @@ impl FluidSim {
                 }
             }
         }
+    }
+
+    // THIS IS HORRIBLY SLOW! rethink how we do this
+    pub fn for_each_pos_simd<F: Fn(f32, f32)>(&self, f: F) {
+        // TODO:
+        self.for_each_pos(f);
     }
 
     // clear the current buffer

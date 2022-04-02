@@ -1,7 +1,7 @@
 // https://www.cs.brandeis.edu/~cs146a/rust/rustbyexample-02-21-2015/simd.html
 
 use std::time::Instant;
-use core_simd::*;
+//use core_simd::*;
 
 use crate::fluid_sim::*;
 
@@ -49,8 +49,8 @@ fn simd_add_assign(xs: &mut Vec<f32>, ys: &Vec<f32>) {
 */
 
 pub fn simd_test() {
-    const grid_size: usize = 100;
-    const particle_count: usize = 400;
+    const grid_size: usize = 300;
+    const particle_count: usize = 2000;
     const max_particles_per_cell: usize = 2;
 
     let mut h1 = FluidSim::new(grid_size, grid_size, max_particles_per_cell * 2); //create_fluid_sim(10, 10, 8);
@@ -184,6 +184,36 @@ pub fn simd_test() {
         let duration = start.elapsed();
         simd_time += duration.as_nanos();
         println!("clear_next_simd - {:?}ns", duration.as_nanos());
+    }
+
+    // THIS IS HORRIBLY SLOW! rethink how we do this
+    // simulate rendering of particles
+    let render_c = |x: f32, y: f32| {
+        const scale: f32 = 1.0;
+        const x_offset: f32 = 1.0;
+        const y_offset: f32 = 1.0;
+        let x2 = x * scale + x_offset;
+        let y2 = y * scale + y_offset;
+        let radius = 1.0 * scale;
+        // draw
+    };
+
+    {
+        println!("for_each_pos ------------>");
+        let start = Instant::now();
+        h1.for_each_pos(render_c);
+        let duration = start.elapsed();
+        standard_time += duration.as_nanos();
+        println!("for_each_pos - {:?}ns", duration.as_nanos());
+    }
+
+    {
+        println!("for_each_pos_simd ------------>");
+        let start = Instant::now();
+        h2.for_each_pos_simd(render_c);
+        let duration = start.elapsed();
+        simd_time += duration.as_nanos();
+        println!("for_each_pos_simd - {:?}ns", duration.as_nanos());
     }
 
     // simd version fo foreach?

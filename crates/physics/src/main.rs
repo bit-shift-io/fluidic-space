@@ -60,6 +60,7 @@ fn render(canvas: &mut WindowCanvas, fluid_sim: &mut FluidSim) {
     // https://rust-sdl2.github.io/rust-sdl2/sdl2/render/struct.Canvas.html#method.circle
     //canvas.circle(16, 16, 16, Color::RGBA(0, 0, 0, 255));
 
+    // THIS IS HORRIBLY SLOW! rethink how we do this
     let render_c = |x: f32, y: f32| {
         // scale up to a visible range
         // this part could be simd accelerated?
