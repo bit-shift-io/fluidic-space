@@ -417,39 +417,22 @@ impl FluidSim {
         }
     }
 
-    // odly, this is consitently slower than the non-simd version!
+    // this seems slower?!
     // how to make this f32x4?
     pub fn add_uniform_velocity_simd(&mut self, vel: f32x2) {
-        // TODO:
-        self.add_uniform_velocity(vel);
-
-        /*
         let mut buff = self.buffer.current.borrow_mut();
 
-        let ptr = buff.vel.as_mut_ptr() as *mut f32x2;
-        let add_value: f32x2 = Simd::from_array([vel_x, vel_y]);
-        let half_bucket_size = self.bucket_size as isize / 2;
-
-        // for each x/y cell....
-        let xy_size = self.x_size * self.y_size;
-        for ixy in 0..xy_size {
-            if (buff.bucket_sz[ixy] <= 0) {
+        for cell in 0..(self.x_size * self.y_size) {
+            // for each bucket within the x/y cell....
+            let bucket_length = buff.bucket_sz[cell];
+            if bucket_length <= 0 {
                 continue;
             }
 
-            let cell = ixy as isize * half_bucket_size;
-
-            // for each bucket within the x/y cell....
-            let bucket_length = (buff.bucket_sz[ixy] as isize) / 2; // TODO: we can get ride of this by making vel and pos f32x2!
-
-            for i in cell..(cell+bucket_length) {
-                unsafe {
-                    *ptr.offset(i) += add_value;
-                }
+            for b in cell..(cell + bucket_length) {
+                buff.vel[b] += vel;
             }
         }
-*/
-        //println!("done");
     }
 
     pub fn apply_velocity(&mut self, dt: f32) {
