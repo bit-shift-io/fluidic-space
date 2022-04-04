@@ -61,6 +61,12 @@ pub fn simd_test() {
     let mut standard_time = 0;
     let mut simd_time = 0;
     
+    // iterator test
+    let fs_it = h1.iter();
+    for cell in fs_it {
+        println!("wha?!");
+    }
+
     println!("benchmarking start ----------------------->");
 
     {/*

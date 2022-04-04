@@ -613,3 +613,56 @@ impl FluidSim {
         self.buffer.swap()
     }
 }
+
+
+
+
+// iterators
+/*
+impl IntoIterator for FluidSim {
+    type Item = i8;
+    type IntoIter = FluidSimIterator;
+
+    fn into_iter(self) -> Self::IntoIter {
+        FluidSimIterator {
+            fluid_sim: self,
+            ix: 0,
+            iy: 0,
+            skip_empty_buckets: true
+        }
+    }
+}
+*/
+
+struct FluidSimIterator<'a> {
+    fluid_sim: &'a FluidSim,
+    ix: usize,
+    iy: usize,
+    skip_empty_buckets: bool
+}
+
+impl FluidSimIterator<'_> {
+    pub fn get_cell_index(&self) -> usize {
+        return self.ix + (self.fluid_sim.bucket_size * self.iy);
+    }
+}
+
+impl FluidSim {
+    pub fn iter(&self) -> FluidSimIterator {
+        FluidSimIterator{
+            fluid_sim: self,
+            ix: 0,
+            iy: 0,
+            skip_empty_buckets: true
+        }
+    }
+}
+
+impl<'a> Iterator for FluidSimIterator<'a> {
+    type Item = &'a mut FluidSimIterator<'a>;
+
+    fn next(&mut self) -> Option<Self::Item> {
+        self.ix += 1;
+        Some(self)
+    }
+}
