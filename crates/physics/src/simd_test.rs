@@ -62,7 +62,7 @@ pub fn simd_test() {
     let mut simd_time = 0;
     
     // iterator test
-    let fs_it = h1.iter();
+    let fs_it = h1.iter_mut();
     for cell in fs_it {
         println!("wha?!");
     }

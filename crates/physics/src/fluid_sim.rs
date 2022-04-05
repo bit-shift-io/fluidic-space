@@ -635,7 +635,7 @@ impl IntoIterator for FluidSim {
 */
 
 struct FluidSimIterator<'a> {
-    fluid_sim: &'a FluidSim,
+    fluid_sim: &'a mut FluidSim,
     ix: usize,
     iy: usize,
     skip_empty_buckets: bool
@@ -645,10 +645,20 @@ impl FluidSimIterator<'_> {
     pub fn get_cell_index(&self) -> usize {
         return self.ix + (self.fluid_sim.bucket_size * self.iy);
     }
+
+    pub fn pos_mut(&self) -> &mut f32x2 {
+        let mut buff = self.fluid_sim.buffer.current.borrow_mut();
+        return &mut buff.pos[self.ix + (self.fluid_sim.bucket_size * self.iy)];
+    }
+
+    pub fn vel_mut(&self) -> &mut f32x2 {
+        let mut buff = self.fluid_sim.buffer.current.borrow_mut();
+        return &mut buff.vel[self.ix + (self.fluid_sim.bucket_size * self.iy)];
+    }
 }
 
 impl FluidSim {
-    pub fn iter(&self) -> FluidSimIterator {
+    pub fn iter_mut(&mut self) -> FluidSimIterator {
         FluidSimIterator{
             fluid_sim: self,
             ix: 0,
@@ -659,10 +669,21 @@ impl FluidSim {
 }
 
 impl<'a> Iterator for FluidSimIterator<'a> {
-    type Item = &'a mut FluidSimIterator<'a>;
+    type Item = &'a mut FluidSimIterator;
 
     fn next(&mut self) -> Option<Self::Item> {
         self.ix += 1;
-        Some(self)
+        if self.ix >= self.fluid_sim.x_size {
+            self.iy += 1;
+            self.ix = 0;
+
+            if self.iy > self.fluid_sim.y_size {
+                return None
+            }
+        }
+
+        unsafe {
+            Some(&mut self)
+        }
     }
 }
