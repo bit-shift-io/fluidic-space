@@ -634,6 +634,8 @@ impl IntoIterator for FluidSim {
 }
 */
 
+
+/*
 struct FluidSimIterator<'a> {
     fluid_sim: &'a mut FluidSim,
     ix: usize,
@@ -668,8 +670,8 @@ impl FluidSim {
     }
 }
 
-impl<'a> Iterator for FluidSimIterator<'a> {
-    type Item = &'a mut FluidSimIterator;
+impl Iterator for FluidSim {
+    type Item = FluidSimIterator<'a>;
 
     fn next(&mut self) -> Option<Self::Item> {
         self.ix += 1;
@@ -682,8 +684,44 @@ impl<'a> Iterator for FluidSimIterator<'a> {
             }
         }
 
-        unsafe {
-            Some(&mut self)
+            Some(FluidSimIterator{
+                fluid_sim: self.fluid_sim,
+                ix: self.ix,
+                iy: self.iy,
+                skip_empty_buckets: self.skip_empty_buckets
+            })
+    }
+}
+*/
+
+pub struct Iter<'a> {
+    slice: &'a [u8; 100],
+    num: usize,
+}
+
+impl<'a> Iterator for Iter<'a> {
+    type Item = &'a [u8];
+
+    fn next(&mut self) -> Option<Self::Item> {
+        if self.num >= 100 {
+            return None;
+        }
+
+        let res = &self.slice[10 * self.num..10 * (self.num + 1)];
+        self.num += 1;
+        Some(res)
+    }
+}
+
+pub struct Data {
+    pub array: [u8; 100],
+}
+
+impl Data {
+    pub fn iter(&self) -> Iter {
+        Iter {
+            slice: &self.array,
+            num: 0,
         }
     }
 }
