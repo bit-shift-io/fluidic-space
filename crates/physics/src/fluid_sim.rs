@@ -8,16 +8,16 @@ struct CollisionResult {
     dist_squared: f32
 }
 
-struct Buffer {
-    pos: Vec<f32x2>,
-    vel: Vec<f32x2>,
-    bucket_sz: Vec<usize>,
+pub struct Buffer {
+    pub pos: Vec<f32x2>,
+    pub vel: Vec<f32x2>,
+    pub bucket_sz: Vec<usize>,
 }
 
 // should we do a triple buffer to allow rendering to occur while updating the particle sim?
-struct DoubleBuffer {
-    current: RefCell<Buffer>,
-    next: RefCell<Buffer>,
+pub struct DoubleBuffer {
+    pub current: RefCell<Buffer>,
+    pub next: RefCell<Buffer>,
 }
 
 impl DoubleBuffer {
@@ -50,10 +50,10 @@ impl DoubleBuffer {
 }
 
 pub struct FluidSim {
-    buffer: DoubleBuffer,
+    pub buffer: DoubleBuffer,
     pub x_size: usize,
     pub y_size: usize,
-    bucket_size: usize,
+    pub bucket_size: usize,
     pub collision_energy_loss: f32, // when colliding, energy loss on velocity
     pub elasticity: f32, // when intersecting what to multiply velocity by. Lower means particles can squish together more
     pub damping: f32, // energy loss. Higher means velocity becomes more like viscous - honey. Lower more like water
@@ -618,86 +618,13 @@ impl FluidSim {
 
 
 // iterators
-/*
-impl IntoIterator for FluidSim {
-    type Item = i8;
-    type IntoIter = FluidSimIterator;
-
-    fn into_iter(self) -> Self::IntoIter {
-        FluidSimIterator {
-            fluid_sim: self,
-            ix: 0,
-            iy: 0,
-            skip_empty_buckets: true
-        }
-    }
-}
-*/
-
-
-/*
-struct FluidSimIterator<'a> {
-    fluid_sim: &'a mut FluidSim,
-    ix: usize,
-    iy: usize,
-    skip_empty_buckets: bool
-}
-
-impl FluidSimIterator<'_> {
-    pub fn get_cell_index(&self) -> usize {
-        return self.ix + (self.fluid_sim.bucket_size * self.iy);
-    }
-
-    pub fn pos_mut(&self) -> &mut f32x2 {
-        let mut buff = self.fluid_sim.buffer.current.borrow_mut();
-        return &mut buff.pos[self.ix + (self.fluid_sim.bucket_size * self.iy)];
-    }
-
-    pub fn vel_mut(&self) -> &mut f32x2 {
-        let mut buff = self.fluid_sim.buffer.current.borrow_mut();
-        return &mut buff.vel[self.ix + (self.fluid_sim.bucket_size * self.iy)];
-    }
-}
-
-impl FluidSim {
-    pub fn iter_mut(&mut self) -> FluidSimIterator {
-        FluidSimIterator{
-            fluid_sim: self,
-            ix: 0,
-            iy: 0,
-            skip_empty_buckets: true
-        }
-    }
-}
-
-impl Iterator for FluidSim {
-    type Item = FluidSimIterator<'a>;
-
-    fn next(&mut self) -> Option<Self::Item> {
-        self.ix += 1;
-        if self.ix >= self.fluid_sim.x_size {
-            self.iy += 1;
-            self.ix = 0;
-
-            if self.iy > self.fluid_sim.y_size {
-                return None
-            }
-        }
-
-            Some(FluidSimIterator{
-                fluid_sim: self.fluid_sim,
-                ix: self.ix,
-                iy: self.iy,
-                skip_empty_buckets: self.skip_empty_buckets
-            })
-    }
-}
-*/
 
 pub struct Iter<'a> {
     pub fluid_sim: &'a FluidSim,
     pub ix: isize,
-    pub iy: isize
+    pub iy: isize,
+    pub i: isize,
+    pub icell: isize
 }
 
 impl<'a> Iterator for Iter<'a> {
@@ -705,6 +632,8 @@ impl<'a> Iterator for Iter<'a> {
 
     fn next(&mut self) -> Option<Self::Item> {
         self.ix += 1;
+        self.i += 1;
+        self.icell += self.fluid_sim.bucket_size as isize;
         if self.ix >= self.fluid_sim.x_size as isize {
             self.iy += 1;
             if self.iy >= self.fluid_sim.y_size as isize {
@@ -717,7 +646,9 @@ impl<'a> Iterator for Iter<'a> {
         let dup = Iter{
             fluid_sim: self.fluid_sim,
             ix: self.ix,
-            iy: self.iy
+            iy: self.iy,
+            i: self.i,
+            icell: self.icell
         };
         Some(dup)
     }
@@ -728,7 +659,9 @@ impl FluidSim {
         Iter {
             fluid_sim: &self,
             ix: -1,
-            iy: 0
+            iy: 0,
+            i: -1,
+            icell: -(self.bucket_size as isize)
         }
     }
 }
