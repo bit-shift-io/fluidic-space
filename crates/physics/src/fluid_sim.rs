@@ -695,33 +695,40 @@ impl Iterator for FluidSim {
 */
 
 pub struct Iter<'a> {
-    slice: &'a [u8; 100],
-    num: usize,
+    pub fluid_sim: &'a FluidSim,
+    pub ix: isize,
+    pub iy: isize
 }
 
 impl<'a> Iterator for Iter<'a> {
-    type Item = &'a [u8];
+    type Item = Iter<'a>; //Cell<'a>; //&'a Cell;
 
     fn next(&mut self) -> Option<Self::Item> {
-        if self.num >= 100 {
-            return None;
+        self.ix += 1;
+        if self.ix >= self.fluid_sim.x_size as isize {
+            self.iy += 1;
+            if self.iy >= self.fluid_sim.y_size as isize {
+                return None
+            }
+
+            self.ix = 0;
         }
 
-        let res = &self.slice[10 * self.num..10 * (self.num + 1)];
-        self.num += 1;
-        Some(res)
+        let dup = Iter{
+            fluid_sim: self.fluid_sim,
+            ix: self.ix,
+            iy: self.iy
+        };
+        Some(dup)
     }
 }
 
-pub struct Data {
-    pub array: [u8; 100],
-}
-
-impl Data {
+impl FluidSim {
     pub fn iter(&self) -> Iter {
         Iter {
-            slice: &self.array,
-            num: 0,
+            fluid_sim: &self,
+            ix: -1,
+            iy: 0
         }
     }
 }

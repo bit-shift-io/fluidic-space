@@ -50,7 +50,7 @@ fn simd_add_assign(xs: &mut Vec<f32>, ys: &Vec<f32>) {
 */
 
 pub fn simd_test() {
-    const grid_size: usize = 300;
+    const grid_size: usize = 4;
     const particle_count: usize = 2000;
     const max_particles_per_cell: usize = 2;
 
@@ -61,28 +61,9 @@ pub fn simd_test() {
     let mut standard_time = 0;
     let mut simd_time = 0;
     
-    /*
-    // iterator test
-    let fs_it = h1.iter_mut();
-    for cell in fs_it {
-        println!("wha?!");
-    }
-    */
-
-    let mut array = [0; 100];
-    for (i, x) in array.iter_mut().enumerate() {
-        *x = i as u8;
-    }
-
-    let data = Data { array };
-    for chunk in data.iter() {
-        println!("{:?}", chunk);
-    }
-
-    println!("----------------------------------------");
-
-    for chunk in data.array.chunks(10) {
-        println!("{:?}", chunk);
+    
+    for cell in h1.iter() {
+        println!("x: {:?}, y: {:?}", cell.ix, cell.iy)
     }
 
     println!("benchmarking start ----------------------->");
