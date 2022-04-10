@@ -3,51 +3,10 @@ use std::cmp;
 use rand::distributions::{Distribution, Uniform};
 use std::cell::RefCell;
 
-struct CollisionResult {
-    collided: bool,
-    dist_squared: f32
-}
 
-pub struct Buffer {
-    pub pos: Vec<f32x2>,
-    pub vel: Vec<f32x2>,
-    pub bucket_sz: Vec<usize>,
-}
+mod double_buffer;
+use crate::fluid_sim::double_buffer::DoubleBuffer;
 
-// should we do a triple buffer to allow rendering to occur while updating the particle sim?
-pub struct DoubleBuffer {
-    pub current: RefCell<Buffer>,
-    pub next: RefCell<Buffer>,
-}
-
-impl DoubleBuffer {
-    pub fn new(total_size: usize, xy_size: usize) -> DoubleBuffer {
-        let zero = Simd::from_array([0.0, 0.0]);
-
-        let mut a = Buffer {
-            pos: vec![zero; total_size],
-            vel: vec![zero; total_size],
-            bucket_sz: vec![0; xy_size],
-        };
-
-        let mut b = Buffer {
-            pos: vec![zero; total_size],
-            vel: vec![zero; total_size],
-            bucket_sz: vec![0; xy_size],
-        };
-
-        let mut db = DoubleBuffer {
-            current: RefCell::new(a),
-            next: RefCell::new(b)
-        };
-        db.swap();
-        return db;
-    }
-
-    pub fn swap(&mut self) {
-        self.current.swap(&self.next);
-    }
-}
 
 pub struct FluidSim {
     pub buffer: DoubleBuffer,
@@ -615,53 +574,4 @@ impl FluidSim {
 }
 
 
-
-
-// iterators
-
-pub struct Iter<'a> {
-    pub fluid_sim: &'a FluidSim,
-    pub ix: isize,
-    pub iy: isize,
-    pub i: isize,
-    pub icell: isize
-}
-
-impl<'a> Iterator for Iter<'a> {
-    type Item = Iter<'a>; //Cell<'a>; //&'a Cell;
-
-    fn next(&mut self) -> Option<Self::Item> {
-        self.ix += 1;
-        self.i += 1;
-        self.icell += self.fluid_sim.bucket_size as isize;
-        if self.ix >= self.fluid_sim.x_size as isize {
-            self.iy += 1;
-            if self.iy >= self.fluid_sim.y_size as isize {
-                return None
-            }
-
-            self.ix = 0;
-        }
-
-        let dup = Iter{
-            fluid_sim: self.fluid_sim,
-            ix: self.ix,
-            iy: self.iy,
-            i: self.i,
-            icell: self.icell
-        };
-        Some(dup)
-    }
-}
-
-impl FluidSim {
-    pub fn iter(&self) -> Iter {
-        Iter {
-            fluid_sim: &self,
-            ix: -1,
-            iy: 0,
-            i: -1,
-            icell: -(self.bucket_size as isize)
-        }
-    }
-}
+mod fluid_sim_iter;
