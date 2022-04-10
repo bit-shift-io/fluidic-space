@@ -1,77 +1,157 @@
-// https://www.cs.brandeis.edu/~cs146a/rust/rustbyexample-02-21-2015/simd.html
-
-use std::time::Instant;
-//use core_simd::*;
-use std::cmp;
-use crate::fluid_sim::*;
+extern crate test;
+use test::Bencher;
+use crate::FluidSim;
 use core_simd::*;
+use std::cmp;
 
-/*
-// element-wise addition
-fn add_assign(xs: &mut Vec<f32>, ys: &Vec<f32>) {
-    //assert_equal_len!(xs, ys);
+const grid_size: usize = 300;
+const particle_count: usize = 2000;
+const max_particles_per_cell: usize = 2;
+const gravity: f32x2 = Simd::from_array([0.0, 0.3]);
+const radius: f32 = 1.0;
+const dist_squared_max: f32 = (radius + radius) * (radius + radius);
 
-    for (x, y) in xs.iter_mut().zip(ys.iter()) {
-        *x += *y;
+
+fn create_fluid_sim(add_points: bool) -> FluidSim {
+    let mut f = FluidSim::new(grid_size, grid_size, max_particles_per_cell * 2);
+    if add_points {
+        let pts = f.generate_random_points(particle_count);
+        f.add_points(&pts);
     }
+    return f;
 }
 
-// simd accelerated addition
-fn simd_add_assign(xs: &mut Vec<f32>, ys: &Vec<f32>) {
-    //assert_equal_len!(xs, ys);
-
-    let size = xs.len() as isize;
-    let chunks = size / 4;
-
-    // pointer to the start of the vector data
-    let p_x: *mut f32 = xs.as_mut_ptr();
-    let p_y: *const f32 = ys.as_ptr();
-
-    // sum excess elements that don't fit in the simd vector
-    for i in (4 * chunks)..size {
-        // dereferencing a raw pointer requires an unsafe block
-        unsafe {
-            // offset by i elements
-            *p_x.offset(i) += *p_y.offset(i);
-        }
-    }
-
-    // treat f32 vector as an simd f32x4 vector
-    let simd_p_x = p_x as *mut f32x4;
-    let simd_p_y = p_y as *const f32x4;
-
-    // sum "simd vector"
-    for i in 0..chunks {
-        unsafe {
-            *simd_p_x.offset(i) += *simd_p_y.offset(i);
-        }
-    }
+#[bench]
+fn add_points(b: &mut Bencher) {
+    let mut f = create_fluid_sim(false);
+    let pts = f.generate_random_points(particle_count);
+    b.iter(|| {
+        f.add_points(&pts);
+    });
 }
-*/
 
-pub fn simd_test() {
-    const grid_size: usize = 300;
-    const particle_count: usize = 2000;
-    const max_particles_per_cell: usize = 2;
+#[bench]
+fn add_points_simd(b: &mut Bencher) {
+    let mut f = create_fluid_sim(false);
+    let pts = f.generate_random_points(particle_count);
+    b.iter(|| {
+        f.add_points_simd(&pts);
+    });
+}
 
-    let mut f = FluidSim::new(grid_size, grid_size, max_particles_per_cell * 2); //create_fluid_sim(10, 10, 8);
-    let mut pts = f.generate_random_points(particle_count);
+#[bench]
+fn update_velocity_from_collisions(b: &mut Bencher) {
+    let mut f = create_fluid_sim(true);
+    b.iter(|| {
+        f.update_velocity_from_collisions();
+    });
+}
 
-    let mut standard_time = 0;
-    let mut simd_time = 0;
-    
+#[bench]
+fn update_velocity_from_collisions_simd(b: &mut Bencher) {
+    let mut f = create_fluid_sim(true);
+    b.iter(|| {
+        f.update_velocity_from_collisions_simd();
+    });
+}
 
-    const gravity: f32x2 = Simd::from_array([0.0, 0.1]);
-    const radius: f32 = 1.0;
-    const dist_squared_max: f32 = (radius + radius) * (radius + radius);
+#[bench]
+fn add_uniform_velocity(b: &mut Bencher) {
+    let mut f = create_fluid_sim(true);
+    b.iter(|| {
+        f.add_uniform_velocity(gravity);
+    });
+}
 
-    println!("benchmarking start ----------------------->");
+#[bench]
+fn add_uniform_velocity_simd(b: &mut Bencher) {
+    let mut f = create_fluid_sim(true);
+    b.iter(|| {
+        f.add_uniform_velocity_simd(gravity);
+    });
+}
 
-    {
-        // this method is almost half the time of seperate loops!
-        // so lets keep developing this to make it clean and easy
-        println!("iterator test ------------>");
-        let start = Instant::now();
+
+#[bench]
+fn apply_velocity(b: &mut Bencher) {
+    let mut f = create_fluid_sim(true);
+    b.iter(|| {
+        f.apply_velocity(1.0);
+    });
+}
+
+#[bench]
+fn apply_velocity_simd(b: &mut Bencher) {
+    let mut f = create_fluid_sim(true);
+    b.iter(|| {
+        f.apply_velocity_simd(1.0);
+    });
+}
+
+#[bench]
+fn swap(b: &mut Bencher) {
+    let mut f = create_fluid_sim(true);
+    b.iter(|| {
+        f.swap();
+    });
+}
+
+#[bench]
+fn clear_next(b: &mut Bencher) {
+    let mut f = create_fluid_sim(true);
+    b.iter(|| {
+        f.clear_next(false);
+    });
+}
+
+#[bench]
+fn clear_next_simd(b: &mut Bencher) {
+    let mut f = create_fluid_sim(true);
+    b.iter(|| {
+        f.clear_next_simd(false);
+    });
+}
+
+
+#[bench]
+fn for_each_pos(b: &mut Bencher) {
+    // THIS IS HORRIBLY SLOW! rethink how we do this
+    // simulate rendering of particles
+    let render_c = #[inline(always)] |pt: f32x2| {
+        const scale: f32 = 1.0;
+        const x_offset: f32 = 1.0;
+        const y_offset: f32 = 1.0;
+        let x2 = pt[0] * scale + x_offset;
+        let y2 = pt[1] * scale + y_offset;
+        let radius2 = 1.0 * scale;
+        // draw
+    };
+
+    let mut f = create_fluid_sim(true);
+    b.iter(|| {
+        f.for_each_pos(render_c);
+    });
+}
+
+
+////////////////////////
+
+#[bench]
+fn lots_of_small_loops(b: &mut Bencher) {
+    let mut f = create_fluid_sim(true);
+    b.iter(|| {
+        f.update_velocity_from_collisions();
+        f.add_uniform_velocity(gravity); // some gravity
+        //f.apply_velocity(0.005); // reducing this step increase sim stability
+        //f.swap();
+        //f.clear_next_simd(false);
+    });
+}
+
+#[bench]
+fn iter(b: &mut Bencher) {
+    let mut f = create_fluid_sim(true);
+    b.iter(|| {
 
         let mut buff = f.buffer.current.borrow_mut();
         for cell in f.iter() {
@@ -174,24 +254,8 @@ pub fn simd_test() {
                         }
                     }
                 }
-
             }
-
-
         }
 
-        let duration = start.elapsed();
-        standard_time += duration.as_nanos();
-        println!("iterator test - {:?}ns", duration.as_nanos());
-    }
-
-    /*
-        To render at 30fps, we have a frame time of 33.333ms
-    */
-    println!("-----------------------");
-    let standard_time_ms = standard_time / 1000000;
-    let simd_time_ms = simd_time / 1000000;
-    println!("standard total  - {:?}ns     - {:?}ms", standard_time, standard_time_ms);
-    println!("simd total      - {:?}ns     - {:?}ms", simd_time, simd_time_ms);
-    println!("benchmarking done -----------------------");
+    });
 }

@@ -25,6 +25,21 @@
         {
             "type": "lldb",
             "request": "launch",
+            "name": "Bench executable 'physics'",
+            "cargo": {
+                "args": [
+                    "bench",
+                    "--no-run",
+                    "--bin=physics",
+                    "--package=physics"
+                ]
+            },
+            "args": [],
+            "cwd": "${workspaceFolder}"
+        },
+        {
+            "type": "lldb",
+            "request": "launch",
             "name": "Debug unit tests in executable 'physics'",
             "cargo": {
                 "args": [

@@ -1,6 +1,7 @@
 #![feature(portable_simd)]
 #![feature(stmt_expr_attributes)]
 #![feature(generic_associated_types)]
+#![feature(test)]
 
 use sdl2::rect::Rect;
 use sdl2::pixels::Color;

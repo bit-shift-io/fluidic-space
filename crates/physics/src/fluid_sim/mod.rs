@@ -1,12 +1,9 @@
 use core_simd::*;
 use std::cmp;
 use rand::distributions::{Distribution, Uniform};
-use std::cell::RefCell;
-
 
 mod double_buffer;
 use crate::fluid_sim::double_buffer::DoubleBuffer;
-
 
 pub struct FluidSim {
     pub buffer: DoubleBuffer,
@@ -509,11 +506,12 @@ impl FluidSim {
         }
     }
 
+    /*
     // THIS IS HORRIBLY SLOW! rethink how we do this
     pub fn for_each_pos_simd<F: Fn(f32x2)>(&self, f: F) {
         // TODO: process 2 at once!
         self.for_each_pos(f);
-    }
+    }*/
 
     // clear the current buffer
     pub fn clear_next(&mut self, full_clear: bool) {
@@ -575,3 +573,5 @@ impl FluidSim {
 
 
 mod fluid_sim_iter;
+mod test;
+mod bench;
