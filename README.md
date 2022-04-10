@@ -20,6 +20,11 @@ flow v2
 
     open crates/physics in vscode then just hit debug!
 
+## Benchmark/Testing
+
+    cargo bench
+    cargo test
+
 ## Tutorials & Links
 
     https://sunjay.dev/learn-game-dev/refactor-traditional-game-loop.html
