@@ -1,14 +1,44 @@
 
 use crate::FluidSim;
-
-// iterators
+//use std::cell::RefCell;
+use core::cell::RefMut;
+use crate::fluid_sim::double_buffer::Buffer;
 
 pub struct Iter<'a> {
     pub fluid_sim: &'a FluidSim,
     pub ix: isize,
     pub iy: isize,
     pub i: isize,
-    pub icell: isize
+    pub icell: isize,
+    pub bucket_length: isize,
+    pub buff: RefMut<'a, Buffer>
+}
+
+impl<'a> Iter<'a> {
+    fn new(fluid_sim: &'a FluidSim) -> Iter<'a> {
+        Iter {
+            fluid_sim,
+            ix: -1,
+            iy: 0,
+            i: -1,
+            icell: -(fluid_sim.bucket_size as isize),
+            bucket_length: 0,
+            buff: fluid_sim.buffer.current.borrow_mut()
+        }
+    }
+
+    // or use the copy trait?
+    fn clone(&self) -> Iter<'a> {
+        Iter {
+            fluid_sim: self.fluid_sim,
+            ix: self.ix,
+            iy: self.iy,
+            i: self.i,
+            icell: self.icell,
+            bucket_length: self.bucket_length,
+            buff: self.buff //self.fluid_sim.buffer.current.borrow_mut() //: self.buff //TODO: exceptionn is here! how do we fix this?
+        }
+    }
 }
 
 impl<'a> Iterator for Iter<'a> {
@@ -27,25 +57,29 @@ impl<'a> Iterator for Iter<'a> {
             self.ix = 0;
         }
 
-        let dup = Iter{
-            fluid_sim: self.fluid_sim,
-            ix: self.ix,
-            iy: self.iy,
-            i: self.i,
-            icell: self.icell
-        };
+        // ignore empty buckets/cells
+        self.bucket_length = self.buff.bucket_sz[self.icell as usize] as isize;
+        if self.bucket_length <= 0 {
+            return self.next();
+        }
+
+        let dup = self.clone();
         Some(dup)
     }
 }
 
 impl FluidSim {
-    pub fn iter(&self) -> Iter {
+    pub fn iter(&self) -> Iter<'_> {
+        Iter::new(&self)
+        /*
         Iter {
             fluid_sim: &self,
             ix: -1,
             iy: 0,
             i: -1,
-            icell: -(self.bucket_size as isize)
-        }
+            icell: -(self.bucket_size as isize),
+            bucket_size: 0,
+            buff: self.buffer.current.borrow_mut()
+        }*/
     }
 }

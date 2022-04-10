@@ -152,14 +152,15 @@ fn lots_of_small_loops(b: &mut Bencher) {
 fn iter(b: &mut Bencher) {
     let mut f = create_fluid_sim(true);
     b.iter(|| {
+        
+        for mut cell in f.iter() {
 
-        let mut buff = f.buffer.current.borrow_mut();
-        for cell in f.iter() {
+            /*
             // for each bucket within the x/y cell....
             let bucket_length = buff.bucket_sz[cell.i as usize] as isize;
             if bucket_length <= 0 {
                 continue;
-            }
+            }*/
 
 
             // update_velocity_from_collisions - part 1
@@ -174,20 +175,20 @@ fn iter(b: &mut Bencher) {
             //let mut check_icell = cell.ix + (cell.iy * cell.fluid_sim.y_size as isize);
             //check_icell *= cell.fluid_sim.bucket_size as isize;
 
-            for b in cell.icell..(cell.icell + bucket_length) {
+            for b in cell.icell..(cell.icell + cell.bucket_length) {
                 // add_uniform_velocity
-                buff.vel[b as usize] += gravity;
+                cell.buff.vel[b as usize] += gravity;
 
                 //
                 // // update_velocity_from_collisions - part 2
                 // get the position of the circle
-                let pt = buff.pos[b as usize];
+                let pt = cell.buff.pos[b as usize];
                 
                 for iy2 in iy2_start..iy2_end {
                     for ix2 in ix2_start..ix2_end {
                         let mut cell2 = ix2 + (iy2 * cell.fluid_sim.y_size as isize);
 
-                        let bucket2_length = buff.bucket_sz[cell2 as usize];
+                        let bucket2_length = cell.buff.bucket_sz[cell2 as usize];
                         cell2 *= cell.fluid_sim.bucket_size as isize;
                         for b2 in 0..bucket2_length {
                             let bucket_cell2 = cell2 + b2 as isize;
@@ -198,7 +199,7 @@ fn iter(b: &mut Bencher) {
                             }
 
                             // get the position of the circle
-                            let pt2 = buff.pos[bucket_cell2 as usize];
+                            let pt2 = cell.buff.pos[bucket_cell2 as usize];
                             //let pt_y2 = buff.pos[bucket_cell2+1];
 
 
@@ -244,7 +245,7 @@ fn iter(b: &mut Bencher) {
                             //buff.vel[bucket_cell2] *= self.collision_energy_loss;
                             //buff.vel[bucket_cell2+1] *= self.collision_energy_loss;
 
-                            buff.vel[b as usize] -= vel;
+                            cell.buff.vel[b as usize] -= vel;
                             //buff.vel[bucket_cell+1] -= vel_y;
 
                             //buff.vel[bucket_cell2] += vel_x;
