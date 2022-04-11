@@ -153,7 +153,9 @@ fn iter(b: &mut Bencher) {
     let mut f = create_fluid_sim(true);
     b.iter(|| {
         
-        for mut cell in f.iter() {
+        let mut cell = f.iter();
+        //for mut cell in f.iter() {
+        while cell.next() {
 
             /*
             // for each bucket within the x/y cell....

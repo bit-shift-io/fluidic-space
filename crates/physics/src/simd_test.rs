@@ -50,12 +50,13 @@ fn simd_add_assign(xs: &mut Vec<f32>, ys: &Vec<f32>) {
 */
 
 pub fn simd_test() {
-    const grid_size: usize = 300;
-    const particle_count: usize = 2000;
-    const max_particles_per_cell: usize = 2;
+    const grid_size: usize = 3;
+    const particle_count: usize = 2;
+    const max_particles_per_pIt: usize = 2;
 
-    let mut f = FluidSim::new(grid_size, grid_size, max_particles_per_cell * 2); //create_fluid_sim(10, 10, 8);
+    let mut f = FluidSim::new(grid_size, grid_size, max_particles_per_pIt); //create_fluid_sim(10, 10, 8);
     let mut pts = f.generate_random_points(particle_count);
+    f.add_points(&pts);
 
     let mut standard_time = 0;
     let mut simd_time = 0;
@@ -73,57 +74,70 @@ pub fn simd_test() {
         println!("iterator test ------------>");
         let start = Instant::now();
 
-        let mut buff = f.buffer.current.borrow_mut();
-        for cell in f.iter() {
-            // for each bucket within the x/y cell....
-            let bucket_length = buff.bucket_sz[cell.i as usize] as isize;
+        //let mut buff = f.buffer.current.borrow_mut();
+        let mut pIt = f.iter();
+        //for mut pIt in f.iter() {
+        while pIt.next() {
+
+            // add_uniform_velocity
+            //pIt.vel() += gravity;
+            pIt.buff.vel[pIt.ibuff] += gravity;
+
+            let pt = pIt.buff.pos[pIt.ibuff]; //pIt.pos();
+
+            /*
+        //for pIt in f.iter() {
+            // for each bucket within the x/y pIt....
+            let bucket_length = pIt.buff.bucket_sz[pIt.i as usize] as isize;
             if bucket_length <= 0 {
                 continue;
-            }
-
-
-            // update_velocity_from_collisions - part 1
-            const cells_to_scan: isize = 3; // need to account for up to 2 * radius
-
-            let iy2_start = if cell.iy < cells_to_scan { 0 } else { cell.iy - cells_to_scan }; //cmp::max(iy - cells_to_scan, 0);
-            let iy2_end = cmp::min(cell.fluid_sim.y_size as isize, cell.iy + cells_to_scan);
-
-            let ix2_start = if cell.ix < cells_to_scan { 0 } else { cell.ix - cells_to_scan }; //cmp::max(ix - cells_to_scan, 0);
-            let ix2_end = cmp::min(cell.fluid_sim.x_size as isize, cell.ix + cells_to_scan);
+            }*/
             
-            //let mut check_icell = cell.ix + (cell.iy * cell.fluid_sim.y_size as isize);
-            //check_icell *= cell.fluid_sim.bucket_size as isize;
+            // update_velocity_from_collisions - part 1
+            const pIts_to_scan: isize = 3; // need to account for up to 2 * radius
 
-            for b in cell.icell..(cell.icell + bucket_length) {
-                // add_uniform_velocity
-                buff.vel[b as usize] += gravity;
+            let iy2_start = if pIt.iy < pIts_to_scan { 0 } else { pIt.iy - pIts_to_scan }; //cmp::max(iy - pIts_to_scan, 0);
+            let iy2_end = cmp::min(pIt.fluid_sim.y_size as isize, pIt.iy + pIts_to_scan);
+
+            let ix2_start = if pIt.ix < pIts_to_scan { 0 } else { pIt.ix - pIts_to_scan }; //cmp::max(ix - pIts_to_scan, 0);
+            let ix2_end = cmp::min(pIt.fluid_sim.x_size as isize, pIt.ix + pIts_to_scan);
+            
+            //let mut check_ipIt = pIt.ix + (pIt.iy * pIt.fluid_sim.y_size as isize);
+            //check_ipIt *= pIt.fluid_sim.bucket_size as isize;
+
+            //for b in pIt.ipIt..(pIt.ipIt + pIt.bucket_length) {
+            {
+                
+                //pIt.buff.vel[b as usize] += gravity;
+                //pIt.buff.vel[pIt.ibuff] += gravity;
+                
 
                 //
                 // // update_velocity_from_collisions - part 2
                 // get the position of the circle
-                let pt = buff.pos[b as usize];
+                //let pt = pIt.buff.pos[b as usize];
                 
                 for iy2 in iy2_start..iy2_end {
                     for ix2 in ix2_start..ix2_end {
-                        let mut cell2 = ix2 + (iy2 * cell.fluid_sim.y_size as isize);
+                        let mut pIt2 = ix2 + (iy2 * pIt.fluid_sim.y_size as isize);
 
-                        let bucket2_length = buff.bucket_sz[cell2 as usize];
-                        cell2 *= cell.fluid_sim.bucket_size as isize;
+                        let bucket2_length = pIt.buff.bucket_sz[pIt2 as usize];
+                        pIt2 *= pIt.fluid_sim.bucket_size as isize;
                         for b2 in 0..bucket2_length {
-                            let bucket_cell2 = cell2 + b2 as isize;
+                            let bucket_pIt2 = pIt2 + b2 as isize;
 
                             // don't compare against ourself
-                            if b == bucket_cell2 {
+                            if pIt.ibuff == bucket_pIt2 as usize {
                                 continue;
                             }
 
                             // get the position of the circle
-                            let pt2 = buff.pos[bucket_cell2 as usize];
-                            //let pt_y2 = buff.pos[bucket_cell2+1];
+                            let pt2 = pIt.buff.pos[bucket_pIt2 as usize];
+                            //let pt_y2 = buff.pos[bucket_pIt2+1];
 
 
                             // now do a radius check for other circles
-                            //print!("  compare against -> pt: {:?},{:?} from pts[{:?}]", pt_x, pt_y, bucket_cell2);
+                            //print!("  compare against -> pt: {:?},{:?} from pts[{:?}]", pt_x, pt_y, bucket_pIt2);
 
                             // compute dist between
                             let a = pt2 - pt;
@@ -154,21 +168,24 @@ pub fn simd_test() {
                             let vel_m: f32x2 = Simd::from_array([vel_mag, vel_mag]);
 
                             // lose or gain energy in the outgoing velocity
-                            let vel = (a * vel_m) * Simd::from_array([cell.fluid_sim.elasticity, cell.fluid_sim.elasticity]);
+                            let vel = (a * vel_m) * Simd::from_array([pIt.fluid_sim.elasticity, pIt.fluid_sim.elasticity]);
                             //let vel_y = (a[1] * vel_mag) * self.elasticity;
 
                             // loose some energy from the incoming velocity
-                            //buff.vel[bucket_cell] *= self.collision_energy_loss;
-                            //buff.vel[bucket_cell+1] *= self.collision_energy_loss;
+                            //buff.vel[bucket_pIt] *= self.collision_energy_loss;
+                            //buff.vel[bucket_pIt+1] *= self.collision_energy_loss;
 
-                            //buff.vel[bucket_cell2] *= self.collision_energy_loss;
-                            //buff.vel[bucket_cell2+1] *= self.collision_energy_loss;
+                            //buff.vel[bucket_pIt2] *= self.collision_energy_loss;
+                            //buff.vel[bucket_pIt2+1] *= self.collision_energy_loss;
 
-                            buff.vel[b as usize] -= vel;
-                            //buff.vel[bucket_cell+1] -= vel_y;
+                            //pIt.vel() -= vel;
+                            pIt.buff.vel[pIt.ibuff] -= vel;
 
-                            //buff.vel[bucket_cell2] += vel_x;
-                            //buff.vel[bucket_cell2+1] += vel_y;
+                            //pIt.buff.vel[b as usize] -= vel;
+                            //buff.vel[bucket_pIt+1] -= vel_y;
+
+                            //buff.vel[bucket_pIt2] += vel_x;
+                            //buff.vel[bucket_pIt2+1] += vel_y;
 
                             //println!("done");
                         }
