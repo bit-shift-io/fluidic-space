@@ -8,7 +8,7 @@ pub fn test() {
     const radius: f32 = 1.0;
     const dist_squared_max: f32 = (radius + radius) * (radius + radius);
 
-    const grid_size: usize = 10;
+    const grid_size: usize = 3;
     const particle_count: usize = 2;
 
     let mut fs = FluidSim2::new(grid_size, grid_size);
@@ -36,7 +36,7 @@ pub fn test() {
                 let col_cell = col_cell_it.cell();
                 for col_particle_it in col_cell {
                     let col_particle = *col_particle_it;
-                    println!("col cell");
+                    //println!("col cell");
 
                     unsafe {
                         // collision check
@@ -68,6 +68,15 @@ pub fn test() {
             }
         }
     }
+
+    // the second pass,
+    // we move the particles
+    for particle in fs.particles.iter_mut() {
+        particle.pos += particle.vel
+    }
+
+    fs.spatial_hash.clear();
+    fs.spatial_hash.add(&mut fs.particles); // can we move this into the above loop? to save a loop?
 
     let duration = start.elapsed();
     println!("fluid sim 2 iterator test - {:?}ns", duration.as_nanos());

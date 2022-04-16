@@ -56,6 +56,6 @@ impl FluidSim2 {
 
     pub fn spatial_hash_particles(&mut self) {
         self.spatial_hash.clear();
-        self.spatial_hash.add(&self.particles);
+        self.spatial_hash.add(&mut self.particles);
     }
 }
