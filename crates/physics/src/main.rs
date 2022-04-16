@@ -13,13 +13,13 @@ use sdl2::video::WindowPos;
 use std::time::Duration;
 
 use crate::fluid_sim::*;
+use crate::fluid_sim_2::*;
 use core_simd::*;
 
 mod third_party;
-//mod basic_fluid;
-mod simd_test;
 
 mod fluid_sim;
+mod fluid_sim_2;
 
 fn render(canvas: &mut WindowCanvas, fluid_sim: &mut FluidSim) {
 
@@ -94,7 +94,8 @@ fn update(fluid_sim: &mut FluidSim) {
 fn main() -> Result<(), String> {
     //third_party::third_party_test();
     //basic_fluid::init_world();
-    simd_test::simd_test();
+    fluid_sim::test();
+    fluid_sim_2::test();
 
     const grid_size: usize = 100;
     const particle_count: usize = 1000;

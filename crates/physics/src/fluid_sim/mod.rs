@@ -5,6 +5,8 @@ use rand::distributions::{Distribution, Uniform};
 mod double_buffer;
 use crate::fluid_sim::double_buffer::DoubleBuffer;
 
+pub use crate::fluid_sim::test::*;
+
 pub struct FluidSim {
     pub buffer: DoubleBuffer,
     pub x_size: usize,
