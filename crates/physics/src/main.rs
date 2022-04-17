@@ -21,7 +21,7 @@ mod third_party;
 mod fluid_sim;
 mod fluid_sim_2;
 
-fn render(canvas: &mut WindowCanvas, fluid_sim: &mut FluidSim) {
+fn render(canvas: &mut WindowCanvas, fluid_sim: &mut FluidSim2) {
 
     const draw_grid: bool = false;
 
@@ -31,7 +31,7 @@ fn render(canvas: &mut WindowCanvas, fluid_sim: &mut FluidSim) {
     const padding: f32 = 20.0;
     const x_offset: f32 = padding;
     const y_offset: f32 = padding;
-    let scale: f32 = ((w_height as f32) - (padding * 2.0)) / (fluid_sim.y_size as f32);
+    let scale: f32 = ((w_height as f32) - (padding * 2.0)) / (fluid_sim.spatial_hash.y_size as f32);
 
 
 
@@ -39,8 +39,8 @@ fn render(canvas: &mut WindowCanvas, fluid_sim: &mut FluidSim) {
     canvas.clear();
 
     // draw the boundary
-    let width = (fluid_sim.x_size as f32 * scale) as u32;
-    let height = (fluid_sim.y_size as f32 * scale) as u32;
+    let width = (fluid_sim.spatial_hash.x_size as f32 * scale) as u32;
+    let height = (fluid_sim.spatial_hash.y_size as f32 * scale) as u32;
     let rect = Rect::new(x_offset as i32, y_offset as i32, width, height);
 
     canvas.set_draw_color(Color::RGBA(255, 0, 0, 255));
@@ -48,8 +48,8 @@ fn render(canvas: &mut WindowCanvas, fluid_sim: &mut FluidSim) {
 
     if draw_grid {
         canvas.set_draw_color(Color::RGBA(255, 0, 0, 100));
-        for y in 0..fluid_sim.y_size {
-            for x in 0..fluid_sim.x_size {
+        for y in 0..fluid_sim.spatial_hash.y_size {
+            for x in 0..fluid_sim.spatial_hash.x_size {
                 let x_start = (x as f32 * scale + x_offset) as i32;
                 let y_start = (y as f32 * scale + y_offset) as i32;
 
@@ -64,6 +64,7 @@ fn render(canvas: &mut WindowCanvas, fluid_sim: &mut FluidSim) {
     // https://rust-sdl2.github.io/rust-sdl2/sdl2/render/struct.Canvas.html#method.circle
     //canvas.circle(16, 16, 16, Color::RGBA(0, 0, 0, 255));
 
+    /*
     // THIS IS HORRIBLY SLOW! rethink how we do this
     let render_c = #[inline(always)] |pt: f32x2| {
         // scale up to a visible range
@@ -74,19 +75,30 @@ fn render(canvas: &mut WindowCanvas, fluid_sim: &mut FluidSim) {
         canvas.circle(x2 as i16, y2 as i16, radius as i16, Color::RGBA(0, 255, 0, 255));
     };
     fluid_sim.for_each_pos(render_c);
+    */
+
+    // simulate render
+    for particle in fluid_sim.particles.iter() {
+        let x2 = particle.pos[0] * scale + x_offset; // simd this!
+        let y2 = particle.pos[1] * scale + y_offset;
+        let radius2 = 1.0 * scale;
+
+        canvas.circle(x2 as i16, y2 as i16, radius2 as i16, Color::RGBA(0, 255, 0, 255));
+    }
 
     canvas.present();
 }
 
-fn update(fluid_sim: &mut FluidSim) {
-    const gravity: f32x2 = Simd::from_array([0.0, 0.3]);
+fn update(fluid_sim: &mut FluidSim2) {
+    fluid_sim.update(0.005);
 
+    /*
     fluid_sim.update_velocity_from_collisions();
     fluid_sim.add_uniform_velocity(gravity); // some gravity
     fluid_sim.apply_velocity(0.005); // reducing this step increase sim stability
     fluid_sim.swap();
     fluid_sim.clear_next_simd(false);
-
+    */
     //println!("updated");
 }
 
@@ -99,19 +111,22 @@ fn main() -> Result<(), String> {
 
     const GRID_SIZE: usize = 100;
     const PARTICLE_COUNT: usize = 1000;
-    const max_particles_per_cell: usize = 2;
-    const sleep_per_frame_ms: u64 = 0;
+    const SLEEP_PER_FRAME_MS: u64 = 0;
 
-    let mut fluid_sim = FluidSim::new(GRID_SIZE, GRID_SIZE, max_particles_per_cell);
+    let mut fluid_sim = FluidSim2::new(GRID_SIZE, GRID_SIZE);
     //fluid_sim.collision_energy_loss = 0.5;
-    fluid_sim.elasticity = 4.0;
-    fluid_sim.damping = 0.95; //0.999;
+    fluid_sim.elasticity = 20.0;
+    fluid_sim.damping = 0.8; //0.999; // might want a contact gamping and non-contact damping?
+    // so we want a high velocity when in contact really close, but as we mov out the velocity is dampened/drained
+    // and the push away force also grows less, this *should* maybe help particle push out without having such extreme
+    // velocities once they 'disconnect'
+    fluid_sim.gravity = Simd::from_array([0.0, 9.8]);
 
-    let mut pts = fluid_sim.generate_random_points(PARTICLE_COUNT);
+    let mut particles = fluid_sim.generate_random_particles(PARTICLE_COUNT);
     //let mut pts = vec![1.0, 1.0, 1.8, 1.8];
     //let mut pts = vec![1.5, 1.5, 3.3, 1.5];
     //let mut pts = vec![2.5, 2.5, 1.5, 3.5];
-    fluid_sim.add_points(&pts);
+    fluid_sim.add_particles(&particles);
 
     let sdl_context = sdl2::init()?;
     let video_subsystem = sdl_context.video()?;
@@ -146,7 +161,7 @@ fn main() -> Result<(), String> {
 
         // Time management!
         //Duration::from_millis(1000)
-        ::std::thread::sleep(Duration::from_millis(sleep_per_frame_ms));
+        ::std::thread::sleep(Duration::from_millis(SLEEP_PER_FRAME_MS));
         //::std::thread::sleep(Duration::from::new(0, 1_000_000_000u32 / 60));
     }
 
