@@ -12,7 +12,7 @@ pub struct SpatialHashIter<'a> {
     
     pub y_start: usize,
     pub y_end: usize,
-    pub y_stride: usize,
+    pub stride: usize,
 
     pub x: Wrapping<usize>,
     pub y: Wrapping<usize>,
@@ -28,7 +28,7 @@ impl<'a> SpatialHashIter<'a> {
             x_end: spatial_hash.x_size,
             y_start: 0,
             y_end: spatial_hash.y_size,
-            y_stride: 0,
+            stride: 0,
             x: Wrapping(usize::MAX),
             y: Wrapping(0),
             cell: Wrapping(usize::MAX)
@@ -50,7 +50,8 @@ impl<'a> SpatialHashIter<'a> {
         let mut cell = Wrapping(x_start + (y.0 * spatial_hash.y_size));
         cell -= (1 as usize);
 
-        let y_stride = spatial_hash.y_size - (y_end - y_start);
+        let delta = x_end - x_start;
+        let stride = spatial_hash.x_size - delta;
 
         SpatialHashIter{
             spatial_hash,
@@ -58,7 +59,7 @@ impl<'a> SpatialHashIter<'a> {
             x_end,
             y_start,
             y_end,
-            y_stride,
+            stride,
             x,
             y,
             cell
@@ -68,14 +69,19 @@ impl<'a> SpatialHashIter<'a> {
     pub fn next(&mut self) -> bool {
         self.x += Wrapping(1);
         self.cell += Wrapping(1);
+        //assert!(self.cell == Wrapping(self.x.0 + (self.y.0 * self.spatial_hash.y_size)), "Ops! Stride must be wrong");
+
         if self.x >= Wrapping(self.x_end) {
             self.y += Wrapping(1);
-            self.cell += Wrapping(self.y_stride);
+            self.cell += Wrapping(self.stride);
+
             if self.y >= Wrapping(self.y_end) {
                 return false;
             }
 
             self.x = Wrapping(self.x_start);
+
+            //assert!(self.cell == Wrapping(self.x.0 + (self.y.0 * self.spatial_hash.y_size)), "Ops! Stride must be wrong");
         }
         return true;
     }

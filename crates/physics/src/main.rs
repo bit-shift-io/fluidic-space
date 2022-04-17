@@ -97,17 +97,17 @@ fn main() -> Result<(), String> {
     fluid_sim::test();
     fluid_sim_2::test();
 
-    const grid_size: usize = 100;
-    const particle_count: usize = 1000;
+    const GRID_SIZE: usize = 100;
+    const PARTICLE_COUNT: usize = 1000;
     const max_particles_per_cell: usize = 2;
     const sleep_per_frame_ms: u64 = 0;
 
-    let mut fluid_sim = FluidSim::new(grid_size, grid_size, max_particles_per_cell);
+    let mut fluid_sim = FluidSim::new(GRID_SIZE, GRID_SIZE, max_particles_per_cell);
     //fluid_sim.collision_energy_loss = 0.5;
     fluid_sim.elasticity = 4.0;
     fluid_sim.damping = 0.95; //0.999;
 
-    let mut pts = fluid_sim.generate_random_points(particle_count);
+    let mut pts = fluid_sim.generate_random_points(PARTICLE_COUNT);
     //let mut pts = vec![1.0, 1.0, 1.8, 1.8];
     //let mut pts = vec![1.5, 1.5, 3.3, 1.5];
     //let mut pts = vec![2.5, 2.5, 1.5, 3.5];

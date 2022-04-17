@@ -4,8 +4,8 @@ use crate::FluidSim;
 use core_simd::*;
 use std::cmp;
 
-const grid_size: usize = 300;
-const particle_count: usize = 2000;
+const GRID_SIZE: usize = 3000;
+const PARTICLE_COUNT: usize = 20000;
 const max_particles_per_cell: usize = 2;
 const gravity: f32x2 = Simd::from_array([0.0, 0.3]);
 const radius: f32 = 1.0;
@@ -13,18 +13,20 @@ const dist_squared_max: f32 = (radius + radius) * (radius + radius);
 
 
 fn create_fluid_sim(add_points: bool) -> FluidSim {
-    let mut f = FluidSim::new(grid_size, grid_size, max_particles_per_cell * 2);
+    let mut f = FluidSim::new(GRID_SIZE, GRID_SIZE, max_particles_per_cell * 2);
     if add_points {
-        let pts = f.generate_random_points(particle_count);
+        let pts = f.generate_random_points(PARTICLE_COUNT);
         f.add_points(&pts);
     }
     return f;
 }
 
+/*
+
 #[bench]
 fn add_points(b: &mut Bencher) {
     let mut f = create_fluid_sim(false);
-    let pts = f.generate_random_points(particle_count);
+    let pts = f.generate_random_points(PARTICLE_COUNT);
     b.iter(|| {
         f.add_points(&pts);
     });
@@ -33,7 +35,7 @@ fn add_points(b: &mut Bencher) {
 #[bench]
 fn add_points_simd(b: &mut Bencher) {
     let mut f = create_fluid_sim(false);
-    let pts = f.generate_random_points(particle_count);
+    let pts = f.generate_random_points(PARTICLE_COUNT);
     b.iter(|| {
         f.add_points_simd(&pts);
     });
@@ -135,6 +137,7 @@ fn for_each_pos(b: &mut Bencher) {
 
 
 ////////////////////////
+*/
 
 #[bench]
 fn lots_of_small_loops(b: &mut Bencher) {
@@ -142,12 +145,14 @@ fn lots_of_small_loops(b: &mut Bencher) {
     b.iter(|| {
         f.update_velocity_from_collisions();
         f.add_uniform_velocity(gravity); // some gravity
-        //f.apply_velocity(0.005); // reducing this step increase sim stability
-        //f.swap();
-        //f.clear_next_simd(false);
+        
+        f.apply_velocity(0.005); // reducing this step increase sim stability
+        f.swap();
+        f.clear_next_simd(false);
     });
 }
 
+/*
 #[bench]
 fn iter(b: &mut Bencher) {
     let mut f = create_fluid_sim(true);
@@ -262,3 +267,4 @@ fn iter(b: &mut Bencher) {
 
     });
 }
+*/

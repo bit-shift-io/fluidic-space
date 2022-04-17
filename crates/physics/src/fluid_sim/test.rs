@@ -50,12 +50,12 @@ fn simd_add_assign(xs: &mut Vec<f32>, ys: &Vec<f32>) {
 */
 
 pub fn test() {
-    const grid_size: usize = 3;
-    const particle_count: usize = 2;
+    const GRID_SIZE: usize = 300;
+    const PARTICLE_COUNT: usize = 2000;
     const max_particles_per_pIt: usize = 2;
 
-    let mut f = FluidSim::new(grid_size, grid_size, max_particles_per_pIt); //create_fluid_sim(10, 10, 8);
-    let mut pts = f.generate_random_points(particle_count);
+    let mut f = FluidSim::new(GRID_SIZE, GRID_SIZE, max_particles_per_pIt); //create_fluid_sim(10, 10, 8);
+    let mut pts = f.generate_random_points(PARTICLE_COUNT);
     f.add_points(&pts);
 
     let mut standard_time = 0;

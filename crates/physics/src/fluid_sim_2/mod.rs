@@ -11,7 +11,7 @@ mod spatial_hash;
 mod spatial_hash_iter;
 mod particle;
 mod test;
-
+mod bench;
 
 pub struct FluidSim2 {
     pub spatial_hash: SpatialHash,
@@ -56,6 +56,6 @@ impl FluidSim2 {
 
     pub fn spatial_hash_particles(&mut self) {
         self.spatial_hash.clear();
-        self.spatial_hash.add(&mut self.particles);
+        self.spatial_hash.add_particles(&mut self.particles);
     }
 }

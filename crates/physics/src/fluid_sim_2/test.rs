@@ -1,4 +1,6 @@
 use crate::FluidSim2;
+use crate::fluid_sim_2::particle::Particle;
+use crate::fluid_sim_2::spatial_hash::SpatialHash;
 use crate::fluid_sim_2::spatial_hash_iter::SpatialHashIter;
 use std::time::Instant;
 use core_simd::*;
@@ -8,11 +10,11 @@ pub fn test() {
     const radius: f32 = 1.0;
     const dist_squared_max: f32 = (radius + radius) * (radius + radius);
 
-    const grid_size: usize = 3;
-    const particle_count: usize = 2;
+    const GRID_SIZE: usize = 300;
+    const PARTICLE_COUNT: usize = 2000;
 
-    let mut fs = FluidSim2::new(grid_size, grid_size);
-    let particles = fs.generate_random_particles(particle_count);
+    let mut fs = FluidSim2::new(GRID_SIZE, GRID_SIZE);
+    let particles = fs.generate_random_particles(PARTICLE_COUNT);
     fs.add_particles(&particles);
 
     println!("fluid sim 2 iterator test ------------>");
@@ -69,14 +71,27 @@ pub fn test() {
         }
     }
 
-    // the second pass,
-    // we move the particles
-    for particle in fs.particles.iter_mut() {
-        particle.pos += particle.vel
-    }
 
     fs.spatial_hash.clear();
-    fs.spatial_hash.add(&mut fs.particles); // can we move this into the above loop? to save a loop?
+
+    // the second pass,
+    // we move the particles
+    let dt = 0.1;
+    let dt2: f32x2 = Simd::from_array([dt, dt]);
+    for particle in fs.particles.iter_mut() {
+        particle.move_reflect(&fs.spatial_hash, dt2);
+        fs.spatial_hash.add_particle(particle);
+    }
+
+    // simulate render
+    for particle in fs.particles.iter_mut() {
+        const scale: f32 = 1.0;
+        const x_offset: f32 = 1.0;
+        const y_offset: f32 = 1.0;
+        let x2 = particle.pos[0] * scale + x_offset;
+        let y2 = particle.pos[1] * scale + y_offset;
+        let radius2 = 1.0 * scale;
+    }
 
     let duration = start.elapsed();
     println!("fluid sim 2 iterator test - {:?}ns", duration.as_nanos());
