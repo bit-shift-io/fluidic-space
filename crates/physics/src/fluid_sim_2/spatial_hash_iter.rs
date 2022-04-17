@@ -1,5 +1,5 @@
 
-use core_simd::*;
+//use core_simd::*;
 use std::num::Wrapping;
 use std::cmp;
 use crate::fluid_sim_2::spatial_hash::*;
@@ -48,7 +48,7 @@ impl<'a> SpatialHashIter<'a> {
         let y = Wrapping(y_start);
 
         let mut cell = Wrapping(x_start + (y.0 * spatial_hash.y_size));
-        cell -= (1 as usize);
+        cell -= 1 as usize;
 
         let delta = x_end - x_start;
         let stride = spatial_hash.x_size - delta;

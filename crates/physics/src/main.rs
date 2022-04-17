@@ -77,7 +77,19 @@ fn render(canvas: &mut WindowCanvas, fluid_sim: &mut FluidSim2) {
     fluid_sim.for_each_pos(render_c);
     */
 
-    // simulate render
+    
+    // draw rects
+    for rect in fluid_sim.rects.iter() {
+        let x_start = (rect.pos[0] as f32 * scale + x_offset) as i32;
+        let y_start = (rect.pos[1] as f32 * scale + y_offset) as i32;
+
+        let w = (rect.size[0] * scale) as u32;
+        let h = (rect.size[1] * scale) as u32;
+        let rect = Rect::new(x_start, y_start, w, h);
+        canvas.draw_rect(rect);
+    }
+    
+    
     for particle in fluid_sim.particles.iter() {
         let x2 = particle.pos[0] * scale + x_offset; // simd this!
         let y2 = particle.pos[1] * scale + y_offset;
@@ -121,6 +133,20 @@ fn main() -> Result<(), String> {
     // and the push away force also grows less, this *should* maybe help particle push out without having such extreme
     // velocities once they 'disconnect'
     fluid_sim.gravity = Simd::from_array([0.0, 9.8]);
+
+    /*
+    fluid_sim.shapes.push(
+        Box::new(fluid_sim_2::Rect {
+            pos: Simd::from_array([50.0, 50.0]),
+            size: Simd::from_array([10.0, 10.0]),
+        })
+    );*/
+    fluid_sim.rects.push(
+        fluid_sim_2::Rect {
+            pos: Simd::from_array([50.0, 50.0]),
+            size: Simd::from_array([10.0, 10.0]),
+        }
+    );
 
     let mut particles = fluid_sim.generate_random_particles(PARTICLE_COUNT);
     //let mut pts = vec![1.0, 1.0, 1.8, 1.8];

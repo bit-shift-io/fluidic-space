@@ -1,8 +1,8 @@
 extern crate test;
-use test::Bencher;
+//use test::Bencher;
 use crate::FluidSim;
 use core_simd::*;
-use std::cmp;
+//use std::cmp;
 
 const GRID_SIZE: usize = 3000;
 const PARTICLE_COUNT: usize = 20000;

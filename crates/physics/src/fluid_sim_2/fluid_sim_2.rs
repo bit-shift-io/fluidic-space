@@ -1,7 +1,9 @@
 use core_simd::*;
-use std::cmp;
+//use std::cmp;
 use rand::distributions::{Distribution, Uniform};
 
+use crate::fluid_sim_2::rect::Rect;
+use crate::fluid_sim_2::shape::Shape;
 use crate::fluid_sim_2::spatial_hash::SpatialHash;
 use crate::fluid_sim_2::spatial_hash_iter::SpatialHashIter;
 use crate::fluid_sim_2::particle::Particle;
@@ -16,6 +18,8 @@ pub struct FluidSim2 {
     pub gravity: f32x2,
     pub radius: f32,
     pub dist_squared_max: f32,
+    //pub shapes: Vec<Box<dyn Shape>>,
+    pub rects: Vec<Rect>,
 }
 
 impl FluidSim2 {
@@ -29,7 +33,9 @@ impl FluidSim2 {
             particles: vec![],
             gravity: Simd::from_array([0.0, 0.3]),
             radius,
-            dist_squared_max: (radius + radius) * (radius + radius)
+            dist_squared_max: (radius + radius) * (radius + radius),
+            //shapes: vec![],
+            rects: vec![]
         }
     }
 
@@ -121,6 +127,12 @@ impl FluidSim2 {
         // we move the particles
         let dt2: f32x2 = Simd::from_array([dt, dt]);
         for particle in self.particles.iter_mut() {
+
+            // collision detection with any rects (TODO: spatial hashing)
+            for rect in self.rects.iter() {
+                rect.collide_with(particle);
+            }
+
             particle.move_reflect(&self.spatial_hash, dt2);
             particle.vel *= damping;
             self.spatial_hash.add_particle(particle);

@@ -1,5 +1,5 @@
 use crate::fluid_sim_2::fluid_sim_2::FluidSim2;
-use crate::fluid_sim_2::particle::Particle;
+//use crate::fluid_sim_2::particle::Particle;
 use crate::fluid_sim_2::spatial_hash::SpatialHash;
 use crate::fluid_sim_2::spatial_hash_iter::SpatialHashIter;
 use std::time::Instant;

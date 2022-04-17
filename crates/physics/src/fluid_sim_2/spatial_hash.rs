@@ -1,4 +1,4 @@
-use std::ptr;
+//use std::ptr;
 use core_simd::*;
 use crate::fluid_sim_2::particle::Particle;
 

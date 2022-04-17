@@ -3,7 +3,7 @@ use crate::FluidSim;
 //use std::cell::RefCell;
 use core::cell::RefMut;
 use crate::fluid_sim::double_buffer::Buffer;
-use core_simd::*;
+//use core_simd::*;
 
 pub struct Iter<'a> {
     pub fluid_sim: &'a FluidSim,

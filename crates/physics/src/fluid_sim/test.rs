@@ -4,7 +4,7 @@ use std::time::Instant;
 //use core_simd::*;
 use std::cmp;
 use crate::fluid_sim::*;
-use core_simd::*;
+//use core_simd::*;
 
 /*
 // element-wise addition
