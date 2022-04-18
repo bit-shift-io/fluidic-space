@@ -10,6 +10,7 @@ pub use crate::fluid_sim_2::test::*;
 
 pub use crate::fluid_sim_2::shape::Shape;
 pub use crate::fluid_sim_2::rect::Rect;
+pub use crate::fluid_sim_2::vector_2::Vector2;
 
 mod spatial_hash;
 mod spatial_hash_iter;
@@ -20,3 +21,4 @@ mod fluid_sim_2;
 
 mod shape;
 mod rect;
+mod vector_2;

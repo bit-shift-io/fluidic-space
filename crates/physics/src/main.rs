@@ -154,7 +154,7 @@ fn main() -> Result<(), String> {
     //let mut particles = fluid_sim.generate_random_particles(PARTICLE_COUNT);
 
     let mut particles = vec![];
-    particles.push(Particle::new(Simd::from_array([44.5, 30.0])));
+    particles.push(Particle::new(Simd::from_array([45.0, 30.0])));
 
     fluid_sim.add_particles(&particles);
 

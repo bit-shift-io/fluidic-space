@@ -1,6 +1,7 @@
 use core_simd::*;
 use crate::Shape;
 use crate::Particle;
+use crate::Vector2;
 
 pub struct Rect {
     pub pos: f32x2,
@@ -9,6 +10,7 @@ pub struct Rect {
 
 // https://stackoverflow.com/questions/401847/circle-rectangle-collision-detection-intersection
 // https://stackoverflow.com/a/1879223/500564
+// https://stackoverflow.com/questions/45370692/circle-rectangle-collision-response
 // 
 // this also supports rotation byb rotating the particle around the rect which is in the demo code
 // how to calculate how to push the particle out of the shape?
@@ -31,7 +33,7 @@ impl Shape for Rect {
         */
 
         // Calculate the distance between the circle's center and this closest point
-        let dist_vec = circle.pos - closest;
+        let dist_vec = Vector2::from_f32x2(circle.pos - closest);
         /*
         float distanceX = circle.X - closestX;
         float distanceY = circle.Y - closestY;
@@ -44,8 +46,17 @@ impl Shape for Rect {
         //float distanceSquared = (distanceX * distanceX) + (distanceY * distanceY);
         let collision = dist_sqrd < radius_sqrd;
         if (collision) {
+            let normal = Vector2::new(-dist_vec[1], dist_vec[0]); //Simd::from_array([-dist_vec[1], dist_vec[0]]); //createVector(- dist.y, dist.x);
+            /*
+            let normal_angle = atan2(normal[1], normal[0]);
+            let incoming_angle = atan2(circle.vel.y, circle.vel.x);
+            let theta = normal_angle - incoming_angle;
+            circle.vel = circle.vel.rotate(2*theta);
+            */
+
             let dist = dist_sqrd.sqrt();
-            let push_vec = dist_vec * Simd::from_array([dist, dist]);
+            let dist_to_push = RADIUS - dist_sqrd.sqrt();
+            let push_vec = dist_vec * Simd::from_array([dist, dist]) * Simd::from_array([dist_to_push, dist_to_push]);
             circle.pos += push_vec
 
             //println!("collision");
