@@ -80,8 +80,11 @@ fn render(canvas: &mut WindowCanvas, fluid_sim: &mut FluidSim2) {
     
     // draw rects
     for rect in fluid_sim.rects.iter() {
-        let x_start = (rect.pos[0] as f32 * scale + x_offset) as i32;
-        let y_start = (rect.pos[1] as f32 * scale + y_offset) as i32;
+        let half_size = rect.size * Simd::from_array([0.5, 0.5]);
+        let top_left = (rect.pos - half_size);
+
+        let x_start = (top_left[0] as f32 * scale + x_offset) as i32;
+        let y_start = (top_left[1] as f32 * scale + y_offset) as i32;
 
         let w = (rect.size[0] * scale) as u32;
         let h = (rect.size[1] * scale) as u32;
@@ -102,7 +105,7 @@ fn render(canvas: &mut WindowCanvas, fluid_sim: &mut FluidSim2) {
 }
 
 fn update(fluid_sim: &mut FluidSim2) {
-    fluid_sim.update(0.005);
+    fluid_sim.update(0.001);
 
     /*
     fluid_sim.update_velocity_from_collisions();
@@ -122,13 +125,13 @@ fn main() -> Result<(), String> {
     fluid_sim_2::test();
 
     const GRID_SIZE: usize = 100;
-    const PARTICLE_COUNT: usize = 1000;
+    const PARTICLE_COUNT: usize = 100;
     const SLEEP_PER_FRAME_MS: u64 = 0;
 
     let mut fluid_sim = FluidSim2::new(GRID_SIZE, GRID_SIZE);
     //fluid_sim.collision_energy_loss = 0.5;
-    fluid_sim.elasticity = 20.0;
-    fluid_sim.damping = 0.8; //0.999; // might want a contact gamping and non-contact damping?
+    //fluid_sim.elasticity = 20.0;
+    fluid_sim.damping = 1.0; //0.999; // might want a contact gamping and non-contact damping?
     // so we want a high velocity when in contact really close, but as we mov out the velocity is dampened/drained
     // and the push away force also grows less, this *should* maybe help particle push out without having such extreme
     // velocities once they 'disconnect'
@@ -148,10 +151,11 @@ fn main() -> Result<(), String> {
         }
     );
 
-    let mut particles = fluid_sim.generate_random_particles(PARTICLE_COUNT);
-    //let mut pts = vec![1.0, 1.0, 1.8, 1.8];
-    //let mut pts = vec![1.5, 1.5, 3.3, 1.5];
-    //let mut pts = vec![2.5, 2.5, 1.5, 3.5];
+    //let mut particles = fluid_sim.generate_random_particles(PARTICLE_COUNT);
+
+    let mut particles = vec![];
+    particles.push(Particle::new(Simd::from_array([44.5, 30.0])));
+
     fluid_sim.add_particles(&particles);
 
     let sdl_context = sdl2::init()?;
