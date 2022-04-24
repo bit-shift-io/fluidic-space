@@ -132,6 +132,7 @@ fn main() -> Result<(), String> {
     //fluid_sim.collision_energy_loss = 0.5;
     //fluid_sim.elasticity = 20.0;
     fluid_sim.properties.damping = 1.0; //0.999; // might want a contact gamping and non-contact damping?
+    fluid_sim.properties.collision_damping = 0.9;
     // so we want a high velocity when in contact really close, but as we mov out the velocity is dampened/drained
     // and the push away force also grows less, this *should* maybe help particle push out without having such extreme
     // velocities once they 'disconnect'

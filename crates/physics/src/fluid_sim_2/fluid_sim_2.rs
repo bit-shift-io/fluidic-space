@@ -142,7 +142,7 @@ impl FluidSim2 {
                 rect.collide_with(particle, &self.properties);
             }
 
-            particle.move_reflect(&self.spatial_hash, dt2);
+            particle.move_reflect(&self.spatial_hash, dt2, &self.properties);
             particle.vel *= damping;
             self.spatial_hash.add_particle(particle);
         }

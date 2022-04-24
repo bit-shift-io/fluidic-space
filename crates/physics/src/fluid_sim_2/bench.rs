@@ -82,7 +82,7 @@ fn fluid_sim_2(b: &mut Bencher) {
         let dt = 0.1;
         let dt2: f32x2 = Simd::from_array([dt, dt]);
         for particle in fs.particles.iter_mut() {
-            particle.move_reflect(&fs.spatial_hash, dt2);
+            particle.move_reflect(&fs.spatial_hash, dt2, &fs.properties);
             fs.spatial_hash.add_particle(particle);
         }
 
