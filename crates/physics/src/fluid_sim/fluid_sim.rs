@@ -86,7 +86,7 @@ impl FluidSim {
     
                 unsafe {
                     // add_uniform_velocity
-                    (*particle).vel += self.properties.gravity;
+                    //(*particle).vel += self.properties.gravity;
 
                     (*particle).check_particle_collisions(&cell_it, &self.properties);
                 }
@@ -106,7 +106,7 @@ impl FluidSim {
             }
 
             particle.move_reflect(&self.spatial_hash, dt2, &self.properties);
-            particle.vel *= damping;
+            //particle.vel *= damping;
             self.spatial_hash.add_particle(particle);
         }
     }

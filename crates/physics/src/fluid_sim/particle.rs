@@ -5,12 +5,12 @@ use crate::*;
 
 #[derive(Clone)]
 pub struct Contact {
-    pub pos: f32x2,
+    //pub pos: f32x2,
     pub normal: f32x2,
-    pub depth: f32
+    pub depth: f32,
+    //pub particle: &Particle
 }
 
-// TODO: fluid sim 3 with pos and vel split into seperate arrays of f32x2 for simd improvmenets
 #[derive(Clone)]
 pub struct Particle {
     pub pos: f32x2,
@@ -37,6 +37,9 @@ impl Particle {
 
     #[inline(always)]
     pub fn check_particle_collisions(&mut self, cell_it: &SpatialHashIter, properties: &Properties) {
+        // clear last frame contacts
+        self.contacts.clear();
+
         // make a new region from the current iterator
         // which we get to check each particle in each of those cells for collisions
         let mut col_cell_it = SpatialHashIter::new_region(&cell_it, (properties.radius * 2.0) as usize); // need to account for up to 2 * radius
@@ -49,7 +52,7 @@ impl Particle {
                 unsafe {
                     // collision check
                     let pos_delta = (*col_particle).pos - self.pos;
-                    let dist_squared = (pos_delta[0] * pos_delta[0]) + (pos_delta[1] * pos_delta[1]);
+                    let dist_squared = length_squared(pos_delta); //(pos_delta[0] * pos_delta[0]) + (pos_delta[1] * pos_delta[1]);
                     if dist_squared <= 0.0 || dist_squared >= properties.dist_squared_max {
                         // no collision or collision with self
                         //println!(" -> NO collision");
@@ -58,6 +61,15 @@ impl Particle {
 
                     // compute and apply velocity to each circle
                     let dist = dist_squared.sqrt();
+
+                    let normal = pos_delta / vec2_from_single(dist);
+
+                    // create a new contact
+                    self.contacts.push(Contact {
+                        normal: normal,
+                        depth: dist
+                    });
+
                     let dist_to_move = dist * 0.5;
 
                     // as the points get closer, the velocity increases
@@ -78,6 +90,14 @@ impl Particle {
 
     #[inline(always)]
     pub fn move_reflect(&mut self, spatial_hash: &SpatialHash, dt2: f32x2, properties: &Properties) {
+
+        // add gravity and some damping
+        self.vel += properties.gravity * dt2;
+        //self.vel *= vec2_from_single(properties.damping); // * dt2;
+
+        // TODO: iterate over contacts and modify velocity appropraitely
+
+        // now lets look at moving the particle's position
         // get the new position of the circle
         let mut pt = self.pos + (self.vel * dt2);
 
