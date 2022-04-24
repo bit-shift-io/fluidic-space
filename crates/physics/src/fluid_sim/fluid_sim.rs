@@ -53,7 +53,7 @@ impl FluidSim {
         let mut rng = rand::thread_rng();
         let mut particles: Vec<Particle> = Vec::new();
 
-        for b in 0..count {
+        for _b in 0..count {
             let pt_x = range.sample(&mut rng) * (self.spatial_hash.x_size as f32);
             let pt_y = range.sample(&mut rng) * (self.spatial_hash.y_size as f32);
             particles.push(Particle::new(Simd::from_array([pt_x, pt_y])));
@@ -76,7 +76,6 @@ impl FluidSim {
     }
 
     pub fn update(&mut self, dt: f32) {
-        let elasticity: f32x2 = vec2_from_single(self.properties.elasticity);
         let damping: f32x2 = vec2_from_single(self.properties.damping);
 
         let mut cell_it = SpatialHashIter::new(&self.spatial_hash);
@@ -88,44 +87,8 @@ impl FluidSim {
                 unsafe {
                     // add_uniform_velocity
                     (*particle).vel += self.properties.gravity;
-                }
-    
-                // make a new region from the current iterator
-                // which we get to check each particle in each of those cells for collisions
-                let mut col_cell_it = SpatialHashIter::new_region(&cell_it, (self.properties.radius * 2.0) as usize); // need to account for up to 2 * radius
-                while col_cell_it.next() {
-                    let col_cell = col_cell_it.cell();
-                    for col_particle_it in col_cell {
-                        let col_particle = *col_particle_it;
-                        //println!("col cell");
-    
-                        unsafe {
-                            // collision check
-                            let pos_delta = (*col_particle).pos - (*particle).pos;
-                            let dist_squared = (pos_delta[0] * pos_delta[0]) + (pos_delta[1] * pos_delta[1]);
-                            if dist_squared <= 0.0 || dist_squared >= self.properties.dist_squared_max {
-                                // no collision or collision with self
-                                //println!(" -> NO collision");
-                                continue;
-                            }
-    
-                            // compute and apply velocity to each circle
-                            let dist = dist_squared.sqrt();
-                            let dist_to_move = dist * 0.5;
-    
-                            // as the points get closer, the velocity increases
-                            // exponentially
-                            // https://www.wolframalpha.com/input?i2d=true&i=plot+Divide%5B1%2Cx%5D
-                            let mut vel_mag = 1.0 / dist_to_move;
-    
-                            let vel_m: f32x2 = Simd::from_array([vel_mag, vel_mag]);
-    
-                            // lose or gain energy in the outgoing velocity
-                            let vel = (pos_delta * vel_m) * elasticity;
-    
-                            (*particle).vel -= vel;
-                        }
-                    }
+
+                    (*particle).check_particle_collisions(&cell_it, &self.properties);
                 }
             }
         }

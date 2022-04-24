@@ -149,7 +149,7 @@ fn main() -> Result<(), String> {
         }
     );
 
-    let mut particles = fluid_sim.generate_random_particles(PARTICLE_COUNT);
+    let particles = fluid_sim.generate_random_particles(PARTICLE_COUNT);
 
     //let mut particles = vec![];
     //particles.push(Particle::with_vel(vec2(45.0, 30.0), vec2(10.0, 0.0)));
