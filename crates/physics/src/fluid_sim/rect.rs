@@ -1,8 +1,8 @@
 use core_simd::*;
 use crate::Shape;
 use crate::Particle;
-use crate::fluid_sim_2::vector_2::*;
-use crate::fluid_sim_2::fluid_sim_2::Properties;
+use crate::fluid_sim::vector_2::*;
+use crate::fluid_sim::fluid_sim::Properties;
 
 pub struct Rect {
     pub pos: f32x2,
@@ -31,7 +31,7 @@ impl Shape for Rect {
 
         // If the distance is less than the circle's radius, an intersection occurs
         let collision = dist_sqrd < radius_sqrd;
-        if (collision) {
+        if collision {
             // https://stackoverflow.com/a/45373126/500564
             // second option:
             // get the velocity along the tangent and then subtracting twice this value from the circle velocity

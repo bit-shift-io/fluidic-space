@@ -13,15 +13,13 @@ use sdl2::video::WindowPos;
 use std::time::Duration;
 
 use crate::fluid_sim::*;
-use crate::fluid_sim_2::*;
 use core_simd::*;
 
 mod third_party;
 
 mod fluid_sim;
-mod fluid_sim_2;
 
-fn render(canvas: &mut WindowCanvas, fluid_sim: &mut FluidSim2) {
+fn render(canvas: &mut WindowCanvas, fluid_sim: &mut FluidSim) {
 
     const draw_grid: bool = false;
 
@@ -81,7 +79,7 @@ fn render(canvas: &mut WindowCanvas, fluid_sim: &mut FluidSim2) {
     // draw rects
     for rect in fluid_sim.rects.iter() {
         let half_size = rect.size * Simd::from_array([0.5, 0.5]);
-        let top_left = (rect.pos - half_size);
+        let top_left = rect.pos - half_size;
 
         let x_start = (top_left[0] as f32 * scale + x_offset) as i32;
         let y_start = (top_left[1] as f32 * scale + y_offset) as i32;
@@ -104,7 +102,7 @@ fn render(canvas: &mut WindowCanvas, fluid_sim: &mut FluidSim2) {
     canvas.present();
 }
 
-fn update(fluid_sim: &mut FluidSim2) {
+fn update(fluid_sim: &mut FluidSim) {
     fluid_sim.update(0.001);
 
     /*
@@ -122,13 +120,12 @@ fn main() -> Result<(), String> {
     //third_party::third_party_test();
     //basic_fluid::init_world();
     fluid_sim::test();
-    fluid_sim_2::test();
 
     const GRID_SIZE: usize = 100;
     const PARTICLE_COUNT: usize = 100;
     const SLEEP_PER_FRAME_MS: u64 = 0;
 
-    let mut fluid_sim = FluidSim2::new(GRID_SIZE, GRID_SIZE);
+    let mut fluid_sim = FluidSim::new(GRID_SIZE, GRID_SIZE);
     //fluid_sim.collision_energy_loss = 0.5;
     //fluid_sim.elasticity = 20.0;
     fluid_sim.properties.damping = 1.0; //0.999; // might want a contact gamping and non-contact damping?
@@ -140,13 +137,13 @@ fn main() -> Result<(), String> {
 
     /*
     fluid_sim.shapes.push(
-        Box::new(fluid_sim_2::Rect {
+        Box::new(fluid_sim::Rect {
             pos: Simd::from_array([50.0, 50.0]),
             size: Simd::from_array([10.0, 10.0]),
         })
     );*/
     fluid_sim.rects.push(
-        fluid_sim_2::Rect {
+        fluid_sim::Rect {
             pos: Simd::from_array([50.0, 50.0]),
             size: Simd::from_array([10.0, 10.0]),
         }

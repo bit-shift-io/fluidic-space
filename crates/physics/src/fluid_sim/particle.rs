@@ -1,27 +1,37 @@
 use core_simd::*;
-use crate::fluid_sim_2::spatial_hash::SpatialHash;
-use crate::fluid_sim_2::fluid_sim_2::Properties;
+use crate::fluid_sim::spatial_hash::SpatialHash;
+use crate::fluid_sim::fluid_sim::Properties;
 use crate::*;
 
+#[derive(Clone)]
+pub struct Contact {
+    pub pos: f32x2,
+    pub normal: f32x2,
+    pub depth: f32
+}
+
 // TODO: fluid sim 3 with pos and vel split into seperate arrays of f32x2 for simd improvmenets
-#[derive(Copy, Clone)]
+#[derive(Clone)]
 pub struct Particle {
     pub pos: f32x2,
-    pub vel: f32x2
+    pub vel: f32x2,
+    pub contacts: Vec<Contact>,
 }
 
 impl Particle {
     pub fn new(pos: f32x2) -> Particle {
         Particle{
             pos,
-            vel: Simd::from_array([0.0, 0.0])
+            vel: Simd::from_array([0.0, 0.0]),
+            contacts: Vec::new()
         }
     }
 
     pub fn with_vel(pos: f32x2, vel: f32x2) -> Particle {
         Particle{
             pos,
-            vel
+            vel,
+            contacts: Vec::new()
         }
     }
 

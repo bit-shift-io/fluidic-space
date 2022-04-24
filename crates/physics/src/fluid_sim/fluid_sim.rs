@@ -2,12 +2,12 @@ use core_simd::*;
 //use std::cmp;
 use rand::distributions::{Distribution, Uniform};
 
-use crate::fluid_sim_2::rect::Rect;
-use crate::fluid_sim_2::shape::Shape;
-use crate::fluid_sim_2::spatial_hash::SpatialHash;
-use crate::fluid_sim_2::spatial_hash_iter::SpatialHashIter;
-use crate::fluid_sim_2::particle::Particle;
-pub use crate::fluid_sim_2::test::*;
+use crate::fluid_sim::rect::Rect;
+use crate::fluid_sim::shape::Shape;
+use crate::fluid_sim::spatial_hash::SpatialHash;
+use crate::fluid_sim::spatial_hash_iter::SpatialHashIter;
+use crate::fluid_sim::particle::Particle;
+pub use crate::fluid_sim::test::*;
 use crate::*;
 
 pub struct Properties {
@@ -20,7 +20,7 @@ pub struct Properties {
     pub dist_squared_max: f32,
 }
 
-pub struct FluidSim2 {
+pub struct FluidSim {
     pub spatial_hash: SpatialHash,
     pub particles: Vec<Particle>,
     pub properties: Properties,
@@ -28,10 +28,10 @@ pub struct FluidSim2 {
     pub rects: Vec<Rect>,
 }
 
-impl FluidSim2 {
-    pub fn new(x_size: usize, y_size: usize) -> FluidSim2 {
+impl FluidSim {
+    pub fn new(x_size: usize, y_size: usize) -> FluidSim {
         let radius: f32 = 1.0;
-        FluidSim2 {
+        FluidSim {
             spatial_hash: SpatialHash::new(x_size, y_size),
             properties: Properties {
                 collision_energy_loss: 1.0,
@@ -65,7 +65,7 @@ impl FluidSim2 {
 
     pub fn add_particles(&mut self, particles: &Vec<Particle>) {
         for particle in particles {
-            self.particles.push(*particle);
+            self.particles.push(particle.clone());
         }
         self.spatial_hash_particles();
     }
