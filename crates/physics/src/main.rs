@@ -131,11 +131,11 @@ fn main() -> Result<(), String> {
     let mut fluid_sim = FluidSim2::new(GRID_SIZE, GRID_SIZE);
     //fluid_sim.collision_energy_loss = 0.5;
     //fluid_sim.elasticity = 20.0;
-    fluid_sim.damping = 1.0; //0.999; // might want a contact gamping and non-contact damping?
+    fluid_sim.properties.damping = 1.0; //0.999; // might want a contact gamping and non-contact damping?
     // so we want a high velocity when in contact really close, but as we mov out the velocity is dampened/drained
     // and the push away force also grows less, this *should* maybe help particle push out without having such extreme
     // velocities once they 'disconnect'
-    fluid_sim.gravity = Simd::from_array([0.0, 9.8]);
+    fluid_sim.properties.gravity = vec2(0.0, 9.8);
 
     /*
     fluid_sim.shapes.push(
@@ -151,10 +151,10 @@ fn main() -> Result<(), String> {
         }
     );
 
-    //let mut particles = fluid_sim.generate_random_particles(PARTICLE_COUNT);
+    let mut particles = fluid_sim.generate_random_particles(PARTICLE_COUNT);
 
-    let mut particles = vec![];
-    particles.push(Particle::new(Simd::from_array([45.0, 30.0])));
+    //let mut particles = vec![];
+    //particles.push(Particle::with_vel(vec2(45.0, 30.0), vec2(10.0, 0.0)));
 
     fluid_sim.add_particles(&particles);
 

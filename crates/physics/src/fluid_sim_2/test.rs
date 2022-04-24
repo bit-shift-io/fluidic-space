@@ -62,7 +62,7 @@ pub fn test() {
                         let vel_m: f32x2 = Simd::from_array([vel_mag, vel_mag]);
 
                         // lose or gain energy in the outgoing velocity
-                        let vel = (pos_delta * vel_m) * Simd::from_array([fs.elasticity, fs.elasticity]);
+                        let vel = (pos_delta * vel_m) * Simd::from_array([fs.properties.elasticity, fs.properties.elasticity]);
 
                         (*particle).vel -= vel;
                     }

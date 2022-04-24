@@ -16,6 +16,13 @@ impl Particle {
         }
     }
 
+    pub fn with_vel(pos: f32x2, vel: f32x2) -> Particle {
+        Particle{
+            pos,
+            vel
+        }
+    }
+
     #[inline(always)]
     pub fn move_reflect(&mut self, spatial_hash: &SpatialHash, dt2: f32x2) {
         // get the new position of the circle
