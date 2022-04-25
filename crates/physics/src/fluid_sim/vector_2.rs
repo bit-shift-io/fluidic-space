@@ -56,3 +56,11 @@ pub fn reflect(v: f32x2, n: f32x2) -> f32x2 {
     let r = v - dot2;
     return r;
 }
+
+// project a onto b
+pub fn project(a: f32x2, b: f32x2) -> f32x2 {
+    // https://www.omnicalculator.com/math/vector-projection
+    // p = (a·b / b·b) * b
+    let p = vec2_from_single(dot(a, b) / dot(b, b)) * b;
+    return p;
+}

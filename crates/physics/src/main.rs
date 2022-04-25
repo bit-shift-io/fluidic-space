@@ -58,23 +58,6 @@ fn render(canvas: &mut WindowCanvas, fluid_sim: &mut FluidSim) {
             }
         }
     }
-
-    // https://rust-sdl2.github.io/rust-sdl2/sdl2/render/struct.Canvas.html#method.circle
-    //canvas.circle(16, 16, 16, Color::RGBA(0, 0, 0, 255));
-
-    /*
-    // THIS IS HORRIBLY SLOW! rethink how we do this
-    let render_c = #[inline(always)] |pt: f32x2| {
-        // scale up to a visible range
-        // this part could be simd accelerated?
-        let x2 = pt[0] * scale + x_offset;
-        let y2 = pt[1] * scale + y_offset;
-        let radius = 1.0 * scale;
-        canvas.circle(x2 as i16, y2 as i16, radius as i16, Color::RGBA(0, 255, 0, 255));
-    };
-    fluid_sim.for_each_pos(render_c);
-    */
-
     
     // draw rects
     for rect in fluid_sim.rects.iter() {
@@ -104,15 +87,6 @@ fn render(canvas: &mut WindowCanvas, fluid_sim: &mut FluidSim) {
 
 fn update(fluid_sim: &mut FluidSim) {
     fluid_sim.update(0.001);
-
-    /*
-    fluid_sim.update_velocity_from_collisions();
-    fluid_sim.add_uniform_velocity(gravity); // some gravity
-    fluid_sim.apply_velocity(0.005); // reducing this step increase sim stability
-    fluid_sim.swap();
-    fluid_sim.clear_next_simd(false);
-    */
-    //println!("updated");
 }
 
 
@@ -122,18 +96,18 @@ fn main() -> Result<(), String> {
     fluid_sim::test();
 
     const GRID_SIZE: usize = 100;
-    const PARTICLE_COUNT: usize = 100;
+    const PARTICLE_COUNT: usize = 400;
     const SLEEP_PER_FRAME_MS: u64 = 0;
 
     let mut fluid_sim = FluidSim::new(GRID_SIZE, GRID_SIZE);
     //fluid_sim.collision_energy_loss = 0.5;
     //fluid_sim.elasticity = 20.0;
     fluid_sim.properties.damping = 1.0; //0.999; // might want a contact gamping and non-contact damping?
-    fluid_sim.properties.collision_damping = 0.9;
+    fluid_sim.properties.collision_damping = 1.0;
     // so we want a high velocity when in contact really close, but as we mov out the velocity is dampened/drained
     // and the push away force also grows less, this *should* maybe help particle push out without having such extreme
     // velocities once they 'disconnect'
-    fluid_sim.properties.gravity = vec2(0.0, 9.8);
+    fluid_sim.properties.gravity = vec2(0.0, 98.0);
 
     /*
     fluid_sim.shapes.push(

@@ -95,7 +95,13 @@ impl Particle {
         self.vel += properties.gravity * dt2;
         //self.vel *= vec2_from_single(properties.damping); // * dt2;
 
-        // TODO: iterate over contacts and modify velocity appropraitely
+        // iterate over contacts and modify velocity
+        for contact in &self.contacts {
+            // create tangent from normal, then project velocity into the tangent
+            // to stop/negate any velocity towards the normal
+            let tangent = vec2(contact.normal[1], contact.normal[0]);
+            self.vel = project(self.vel, tangent);
+        }
 
         // now lets look at moving the particle's position
         // get the new position of the circle
