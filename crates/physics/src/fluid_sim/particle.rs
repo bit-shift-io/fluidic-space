@@ -101,6 +101,11 @@ impl Particle {
             // to stop/negate any velocity towards the normal
             let tangent = vec2(contact.normal[1], contact.normal[0]);
             self.vel = project(self.vel, tangent);
+
+            // TODO:
+            // should we compute the velocity loss here and apply that velocity to the other particle
+            // scenario: particle 1 is not moving, is hit by particle 2 which is moving at high speed
+            // 
         }
 
         // now lets look at moving the particle's position
