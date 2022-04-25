@@ -77,7 +77,9 @@ impl FluidSim {
 
     pub fn update(&mut self, dt: f32) {
         let damping: f32x2 = vec2_from_single(self.properties.damping);
+        let dt2: f32x2 = vec2_from_single(dt);
 
+        // compute particle contacts
         let mut cell_it = SpatialHashIter::new(&self.spatial_hash);
         while cell_it.next() {
             let cell = cell_it.cell();
@@ -85,28 +87,27 @@ impl FluidSim {
                 let particle = *particle_it;
     
                 unsafe {
-                    // add_uniform_velocity
-                    //(*particle).vel += self.properties.gravity;
-
-                    (*particle).check_particle_collisions(&cell_it, &self.properties);
+                    (*particle).check_particle_collisions(&cell_it, &self.properties, dt2);
                 }
             }
         }
     
         self.spatial_hash.clear();
     
-        // the second pass,
-        // we move the particles
-        let dt2: f32x2 = Simd::from_array([dt, dt]);
+        // propogate & update velocity
         for particle in self.particles.iter_mut() {
+            particle.update_velocity(&self.spatial_hash, &self.properties, dt2);
+        }
 
+        // we move the particles
+        for particle in self.particles.iter_mut() {
             // collision detection with any rects (TODO: spatial hashing)
             for rect in self.rects.iter() {
                 rect.collide_with(particle, &self.properties);
             }
 
-            particle.move_reflect(&self.spatial_hash, dt2, &self.properties);
-            //particle.vel *= damping;
+            particle.move_pos(&self.spatial_hash, &self.properties, dt2);
+
             self.spatial_hash.add_particle(particle);
         }
     }

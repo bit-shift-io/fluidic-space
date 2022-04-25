@@ -8,7 +8,7 @@ pub struct Contact {
     //pub pos: f32x2,
     pub normal: f32x2,
     pub depth: f32,
-    //pub particle: &Particle
+    pub particle: *mut Particle
 }
 
 #[derive(Clone)]
@@ -36,7 +36,7 @@ impl Particle {
     }
 
     #[inline(always)]
-    pub fn check_particle_collisions(&mut self, cell_it: &SpatialHashIter, properties: &Properties) {
+    pub fn check_particle_collisions(&mut self, cell_it: &SpatialHashIter, properties: &Properties, dt: f32x2) {
         // clear last frame contacts
         self.contacts.clear();
 
@@ -67,9 +67,12 @@ impl Particle {
                     // create a new contact
                     self.contacts.push(Contact {
                         normal: normal,
-                        depth: dist
+                        depth: dist,
+                        particle: col_particle
                     });
 
+                    // TODO: should this conntriute towards an 'instantanous push' amount
+                    // which is different to velocity?
                     let dist_to_move = dist * 0.5;
 
                     // as the points get closer, the velocity increases
@@ -89,28 +92,32 @@ impl Particle {
     }
 
     #[inline(always)]
-    pub fn move_reflect(&mut self, spatial_hash: &SpatialHash, dt2: f32x2, properties: &Properties) {
-
-        // add gravity and some damping
-        self.vel += properties.gravity * dt2;
-        //self.vel *= vec2_from_single(properties.damping); // * dt2;
+    pub fn update_velocity(&mut self, spatial_hash: &SpatialHash, properties: &Properties, dt: f32x2) {
+        // add gravity
+        self.vel += properties.gravity * dt;
 
         // iterate over contacts and modify velocity
         for contact in &self.contacts {
             // create tangent from normal, then project velocity into the tangent
             // to stop/negate any velocity towards the normal
             let tangent = vec2(contact.normal[1], contact.normal[0]);
-            self.vel = project(self.vel, tangent);
+            let projected_vel = project(self.vel, tangent);
+            let transfer_vel = self.vel - projected_vel;
+            self.vel = projected_vel;
 
-            // TODO:
-            // should we compute the velocity loss here and apply that velocity to the other particle
+            // we compute the velocity loss here and apply that velocity to the other particle
             // scenario: particle 1 is not moving, is hit by particle 2 which is moving at high speed
-            // 
+            unsafe {
+                (*contact.particle).vel += transfer_vel * vec2_from_single(0.9); // energy loss on collision
+            }
         }
+    }
 
+    #[inline(always)]
+    pub fn move_pos(&mut self, spatial_hash: &SpatialHash, properties: &Properties, dt: f32x2) {
         // now lets look at moving the particle's position
         // get the new position of the circle
-        let mut pt = self.pos + (self.vel * dt2);
+        let mut pt = self.pos + (self.vel * dt);
 
         let mut collision = false;
 
@@ -140,7 +147,7 @@ impl Particle {
 
         if collision {
             self.vel *= vec2_from_single(properties.collision_damping);
-            pt = self.pos + (self.vel * dt2);
+            pt = self.pos + (self.vel * dt);
         }
 
         self.pos = pt;
