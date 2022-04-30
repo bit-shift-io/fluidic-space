@@ -29,21 +29,13 @@ fn draw_rect_rotate(canvas: &mut WindowCanvas, rect: &fluid_sim::Rect, scale: f3
     let top_right = vec2(bottom_right[0], top_left[1]);
     let bottom_left = vec2(top_left[0], bottom_right[1]);
 
-    //let x_start = (top_left[0] as f32 * scale + x_offset) as i32;
-    //let y_start = (top_left[1] as f32 * scale + y_offset) as i32;
-
-    //let w = (rect.size[0] * scale) as u32;
-    //let h = (rect.size[1] * scale) as u32;
-    //let sdl_rect = Rect::new(x_start, y_start, w, h);
-
-
-	let radians = rect.rotation.to_radians();
+	let radians = rect.rotation;
 
     // rotate points around origin
-    let top_left_rotated = rotate_around(top_left, pos, radians);
-    let bottom_right_rotated = rotate_around(bottom_right, pos, radians);
-    let top_right_rotated = rotate_around(top_right, pos, radians);
-    let bottom_left_rotated = rotate_around(bottom_left, pos, radians);
+    let top_left_rotated = rotate_point_around(top_left, pos, radians);
+    let bottom_right_rotated = rotate_point_around(bottom_right, pos, radians);
+    let top_right_rotated = rotate_point_around(top_right, pos, radians);
+    let bottom_left_rotated = rotate_point_around(bottom_left, pos, radians);
 
     let top_left_pt = Point::new(top_left_rotated[0] as i32, top_left_rotated[1] as i32);
     let bottom_right_pt = Point::new(bottom_right_rotated[0] as i32, bottom_right_rotated[1] as i32);
@@ -147,16 +139,24 @@ fn main() -> Result<(), String> {
     );*/
     fluid_sim.rects.push(
         fluid_sim::Rect {
-            pos: Simd::from_array([50.0, 50.0]),
-            size: Simd::from_array([10.0, 10.0]),
-            rotation: 10.0 // TODO: make this radians? is this rotating the correct direction?
+            pos: Simd::from_array([30.0, 50.0]),
+            size: Simd::from_array([30.0, 10.0]),
+            rotation: (20.0 as f32).to_radians()
+        }
+    );
+
+    fluid_sim.rects.push(
+        fluid_sim::Rect {
+            pos: Simd::from_array([70.0, 50.0]),
+            size: Simd::from_array([30.0, 10.0]),
+            rotation: (-20.0 as f32).to_radians()
         }
     );
 
     let particles = fluid_sim.generate_random_particles(PARTICLE_COUNT);
 
     //let mut particles = vec![];
-    //particles.push(Particle::with_vel(vec2(45.0, 30.0), vec2(10.0, 0.0)));
+    //particles.push(Particle::with_vel(vec2(45.0, 30.0), vec2(0.0, 0.0)));
 
     fluid_sim.add_particles(&particles);
 

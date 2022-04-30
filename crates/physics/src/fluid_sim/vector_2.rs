@@ -65,13 +65,21 @@ pub fn project(a: f32x2, b: f32x2) -> f32x2 {
     return p;
 }
 
-// rotate pt around origin by a given angle (in radians)
-pub fn rotate_around(pt: f32x2, origin: f32x2, angle_rad: f32) -> f32x2 {
-    let mut delta = origin - pt; 
+// counterclockwise rotation
+pub fn rotate_vector(v: f32x2, angle_rad: f32) -> f32x2 {
+    let c = angle_rad.cos();
+    let s = angle_rad.sin();
     let rotated = vec2(
-        delta[0] * angle_rad.cos() - delta[1] * angle_rad.sin(),
-        delta[0] * angle_rad.sin() + delta[1] * angle_rad.cos()
+        (v[0] * c) - (v[1] * s),
+        (v[0] * s) + (v[1] * c)
     );
+    return rotated;
+}
+
+// rotate pt around origin by a given angle (in radians)
+pub fn rotate_point_around(pt: f32x2, origin: f32x2, angle_rad: f32) -> f32x2 {
+    let mut delta = pt - origin; 
+    let rotated = rotate_vector(delta, angle_rad);
     let new_pt = origin + rotated;
     return new_pt;
 }
