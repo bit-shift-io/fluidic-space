@@ -3,6 +3,7 @@
 #![feature(generic_associated_types)]
 #![feature(test)]
 
+use sdl2::rect::Point;
 use sdl2::rect::Rect;
 use sdl2::pixels::Color;
 use sdl2::event::Event;
@@ -19,6 +20,42 @@ mod third_party;
 
 mod fluid_sim;
 
+fn draw_rect_rotate(canvas: &mut WindowCanvas, rect: &fluid_sim::Rect, scale: f32, offset: f32x2) { 
+    let half_size = rect.size * vec2_from_single(0.5) * vec2_from_single(scale);
+
+    let pos = (rect.pos * vec2_from_single(scale)) + offset;
+    let top_left = pos - half_size;
+    let bottom_right = pos + half_size;
+    let top_right = vec2(bottom_right[0], top_left[1]);
+    let bottom_left = vec2(top_left[0], bottom_right[1]);
+
+    //let x_start = (top_left[0] as f32 * scale + x_offset) as i32;
+    //let y_start = (top_left[1] as f32 * scale + y_offset) as i32;
+
+    //let w = (rect.size[0] * scale) as u32;
+    //let h = (rect.size[1] * scale) as u32;
+    //let sdl_rect = Rect::new(x_start, y_start, w, h);
+
+
+	let radians = rect.rotation.to_radians();
+
+    // rotate points around origin
+    let top_left_rotated = rotate_around(top_left, pos, radians);
+    let bottom_right_rotated = rotate_around(bottom_right, pos, radians);
+    let top_right_rotated = rotate_around(top_right, pos, radians);
+    let bottom_left_rotated = rotate_around(bottom_left, pos, radians);
+
+    let top_left_pt = Point::new(top_left_rotated[0] as i32, top_left_rotated[1] as i32);
+    let bottom_right_pt = Point::new(bottom_right_rotated[0] as i32, bottom_right_rotated[1] as i32);
+    let top_right_pt = Point::new(top_right_rotated[0] as i32, top_right_rotated[1] as i32);
+    let bottom_left_pt = Point::new(bottom_left_rotated[0] as i32, bottom_left_rotated[1] as i32);
+
+    canvas.draw_line(top_left_pt, top_right_pt);
+    canvas.draw_line(top_right_pt, bottom_right_pt);
+    canvas.draw_line(bottom_right_pt, bottom_left_pt);
+    canvas.draw_line(bottom_left_pt, top_left_pt);
+}
+
 fn render(canvas: &mut WindowCanvas, fluid_sim: &mut FluidSim) {
 
     const draw_grid: bool = false;
@@ -30,6 +67,7 @@ fn render(canvas: &mut WindowCanvas, fluid_sim: &mut FluidSim) {
     const x_offset: f32 = padding;
     const y_offset: f32 = padding;
     let scale: f32 = ((w_height as f32) - (padding * 2.0)) / (fluid_sim.spatial_hash.y_size as f32);
+    let offset = vec2(x_offset, y_offset);
 
 
 
@@ -61,16 +99,7 @@ fn render(canvas: &mut WindowCanvas, fluid_sim: &mut FluidSim) {
     
     // draw rects
     for rect in fluid_sim.rects.iter() {
-        let half_size = rect.size * Simd::from_array([0.5, 0.5]);
-        let top_left = rect.pos - half_size;
-
-        let x_start = (top_left[0] as f32 * scale + x_offset) as i32;
-        let y_start = (top_left[1] as f32 * scale + y_offset) as i32;
-
-        let w = (rect.size[0] * scale) as u32;
-        let h = (rect.size[1] * scale) as u32;
-        let rect = Rect::new(x_start, y_start, w, h);
-        canvas.draw_rect(rect);
+        draw_rect_rotate(canvas, rect, scale, offset);
     }
     
     
@@ -120,6 +149,7 @@ fn main() -> Result<(), String> {
         fluid_sim::Rect {
             pos: Simd::from_array([50.0, 50.0]),
             size: Simd::from_array([10.0, 10.0]),
+            rotation: 10.0 // TODO: make this radians? is this rotating the correct direction?
         }
     );
 

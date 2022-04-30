@@ -35,6 +35,10 @@ impl Particle {
         }
     }
 
+    // TODO:
+    // sweep circles?
+    // https://www.gamedeveloper.com/disciplines/simple-intersection-tests-for-games
+    //
     #[inline(always)]
     pub fn check_particle_collisions(&mut self, cell_it: &SpatialHashIter, properties: &Properties, dt: f32x2) {
         // clear last frame contacts

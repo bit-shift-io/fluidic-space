@@ -64,3 +64,14 @@ pub fn project(a: f32x2, b: f32x2) -> f32x2 {
     let p = vec2_from_single(dot(a, b) / dot(b, b)) * b;
     return p;
 }
+
+// rotate pt around origin by a given angle (in radians)
+pub fn rotate_around(pt: f32x2, origin: f32x2, angle_rad: f32) -> f32x2 {
+    let mut delta = origin - pt; 
+    let rotated = vec2(
+        delta[0] * angle_rad.cos() - delta[1] * angle_rad.sin(),
+        delta[0] * angle_rad.sin() + delta[1] * angle_rad.cos()
+    );
+    let new_pt = origin + rotated;
+    return new_pt;
+}

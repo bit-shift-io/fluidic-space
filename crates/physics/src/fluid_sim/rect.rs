@@ -6,7 +6,8 @@ use crate::fluid_sim::fluid_sim::Properties;
 
 pub struct Rect {
     pub pos: f32x2,
-    pub size: f32x2
+    pub size: f32x2,
+    pub rotation: f32
 }
 
 // https://stackoverflow.com/questions/401847/circle-rectangle-collision-detection-intersection
