@@ -1,4 +1,4 @@
-use crate::fluid_sim::fluid_sim::FluidSim;
+use crate::fluid_sim::FluidSim;
 use std::time::Instant;
 use core_simd::*;
 

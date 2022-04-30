@@ -1,6 +1,6 @@
 //use std::ptr;
 use core_simd::*;
-use crate::fluid_sim::particle::Particle;
+use crate::particle::Particle;
 
 /*
 pub struct Hash {

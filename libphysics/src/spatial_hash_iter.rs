@@ -2,7 +2,7 @@
 //use core_simd::*;
 use std::num::Wrapping;
 use std::cmp;
-use crate::fluid_sim::spatial_hash::*;
+use crate::spatial_hash::*;
 
 pub struct SpatialHashIter<'a> {
     pub spatial_hash: &'a SpatialHash,

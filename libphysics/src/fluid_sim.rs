@@ -1,14 +1,12 @@
 use core_simd::*;
-//use std::cmp;
 use rand::distributions::{Distribution, Uniform};
 
-use crate::fluid_sim::rect::Rect;
-use crate::fluid_sim::shape::Shape;
-use crate::fluid_sim::spatial_hash::SpatialHash;
-use crate::fluid_sim::spatial_hash_iter::SpatialHashIter;
-use crate::fluid_sim::particle::Particle;
-pub use crate::fluid_sim::test::*;
-use crate::*;
+use crate::rect::Rect;
+use crate::shape::Shape;
+use crate::spatial_hash::SpatialHash;
+use crate::spatial_hash_iter::SpatialHashIter;
+use crate::particle::Particle;
+use crate::vector_2::*;
 
 pub struct Properties {
     pub collision_energy_loss: f32, // when colliding, energy loss on velocity

@@ -1,8 +1,8 @@
 use core_simd::*;
-use crate::Shape;
-use crate::Particle;
-use crate::fluid_sim::vector_2::*;
-use crate::fluid_sim::fluid_sim::Properties;
+use crate::shape::Shape;
+use crate::particle::Particle;
+use crate::vector_2::*;
+use crate::fluid_sim::Properties;
 
 pub struct Rect {
     pub pos: f32x2,

@@ -1,7 +1,8 @@
 use core_simd::*;
-use crate::fluid_sim::spatial_hash::SpatialHash;
-use crate::fluid_sim::fluid_sim::Properties;
-use crate::*;
+use crate::spatial_hash::SpatialHash;
+use crate::spatial_hash_iter::SpatialHashIter;
+use crate::fluid_sim::Properties;
+use crate::vector_2::*;
 
 #[derive(Clone)]
 pub struct Contact {

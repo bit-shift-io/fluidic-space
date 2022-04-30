@@ -3,4 +3,8 @@ name = "libphysics"
 version = "0.1.0"
 edition = "2021"
 
+[dependencies]
+core_simd = { git = "https://github.com/rust-lang/portable-simd" }
+rand = "0.8.0"
+
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html

@@ -13,14 +13,11 @@ use sdl2::gfx::primitives::DrawRenderer;
 use sdl2::video::WindowPos;
 use std::time::Duration;
 
-use crate::fluid_sim::*;
 use core_simd::*;
 
-mod third_party;
+use libphysics::*;
 
-mod fluid_sim;
-
-fn draw_rect_rotate(canvas: &mut WindowCanvas, rect: &fluid_sim::Rect, scale: f32, offset: f32x2) { 
+fn draw_rect_rotate(canvas: &mut WindowCanvas, rect: &libphysics::Rect, scale: f32, offset: f32x2) { 
     let half_size = rect.size * vec2_from_single(0.5) * vec2_from_single(scale);
 
     let pos = (rect.pos * vec2_from_single(scale)) + offset;
@@ -112,9 +109,8 @@ fn update(fluid_sim: &mut FluidSim) {
 
 
 fn main() -> Result<(), String> {
-    //third_party::third_party_test();
     //basic_fluid::init_world();
-    fluid_sim::test();
+    libphysics::test();
 
     const GRID_SIZE: usize = 100;
     const PARTICLE_COUNT: usize = 400;
@@ -138,7 +134,7 @@ fn main() -> Result<(), String> {
         })
     );*/
     fluid_sim.rects.push(
-        fluid_sim::Rect {
+        libphysics::Rect {
             pos: Simd::from_array([30.0, 50.0]),
             size: Simd::from_array([30.0, 10.0]),
             rotation: (20.0 as f32).to_radians()
@@ -146,7 +142,7 @@ fn main() -> Result<(), String> {
     );
 
     fluid_sim.rects.push(
-        fluid_sim::Rect {
+        libphysics::Rect {
             pos: Simd::from_array([70.0, 50.0]),
             size: Simd::from_array([30.0, 10.0]),
             rotation: (-20.0 as f32).to_radians()
