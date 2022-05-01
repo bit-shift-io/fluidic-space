@@ -1,11 +1,16 @@
 use sdl2::Sdl;
 use sdl2::video::WindowPos;
 use sdl2::render::WindowCanvas;
+use sdl2::render::Texture;
+use sdl2::render::TextureCreator;
+use sdl2::image::{InitFlag, LoadTexture};
+use sdl2::video::WindowContext;
 
 pub struct SdlSystem {
     pub sdl_context: Sdl,
     //window: Window,
-    pub canvas: WindowCanvas
+    pub canvas: WindowCanvas,
+    pub texture_creator: TextureCreator<WindowContext>
 }
 
 impl SdlSystem {
@@ -22,12 +27,23 @@ impl SdlSystem {
         let canvas = window.into_canvas().build()
             .expect("could not make a canvas");
 
+        let texture_creator = canvas.texture_creator();
+        //let texture = texture_creator.load_texture("assets/gradient_linear.png").unwrap();
+
         SdlSystem {
             sdl_context,
             //window,
-            canvas
+            canvas,
+            texture_creator
         }
     }
+
+    pub fn load_texture(&self, path: &str) -> Texture {
+        //let texture_creator = self.canvas.texture_creator();
+        //let texture = self.texture_creator.load_texture(path).unwrap();
+        return self.texture_creator.load_texture(path).unwrap();
+    }
+
 /*
     pub fn run_event_loop<F: Fn(f32)>(&mut self, update: F) {
         let mut event_pump = self.sdl_context.event_pump().unwrap();

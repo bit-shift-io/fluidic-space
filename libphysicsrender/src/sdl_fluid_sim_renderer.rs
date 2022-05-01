@@ -112,13 +112,21 @@ impl /*FluidSimRenderer for*/ SdlFluidSimRenderer/*<'_>*/ {
                 draw_rect_rotate(canvas, rect, scale, offset);
             }
                 
-            
+            // https://john-wigg.dev/2DMetaballs/
+            //let mut edge_particles: Vec<*const Particle> = Vec::new();
             for particle in fluid_sim.particles.iter() {
+                /*
+                let is_edge = particle.contacts.len() <= 1;
+                if is_edge {
+                    edge_particles.push(&*particle);
+                }*/
+
                 let x2 = particle.pos[0] * scale + x_offset; // simd this!
                 let y2 = particle.pos[1] * scale + y_offset;
                 let radius2 = 1.0 * scale;
         
-                canvas.circle(x2 as i16, y2 as i16, radius2 as i16, Color::RGBA(0, 255, 0, 255)).ok();
+                let color = Color::RGBA(0, 255, 0, 255); //if is_edge { Color::RGBA(0, 0, 255, 255) } else { Color::RGBA(0, 255, 0, 255) };
+                canvas.circle(x2 as i16, y2 as i16, radius2 as i16, color).ok();
             }
         
             canvas.present();
