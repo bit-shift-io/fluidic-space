@@ -1,6 +1,8 @@
 # fluidic-space
 flow v2
 
+![](img.jpg)
+
 ## Install
 
     run crates/install.sh to setup rust project
