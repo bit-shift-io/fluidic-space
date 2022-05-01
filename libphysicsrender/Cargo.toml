@@ -1,0 +1,12 @@
+[package]
+name = "libphysicsrender"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+libphysics = { version = "0.1.0", path = "../libphysics" }
+
+[dependencies.sdl2]
+version = "0.32.1"
+default-features = false
+features = ["gfx"]

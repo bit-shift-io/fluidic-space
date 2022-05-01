@@ -1,6 +1,7 @@
 [workspace]
 members = [
     "./libphysics",
+    "./libphysicsrender",
     "./physics"
 ]
 

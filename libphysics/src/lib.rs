@@ -8,10 +8,10 @@ pub use crate::spatial_hash::SpatialHash;
 pub use crate::spatial_hash_iter::SpatialHashIter;
 pub use crate::particle::Particle;
 pub use crate::test::*;
-
 pub use crate::shape::Shape;
 pub use crate::rect::Rect;
 pub use crate::vector_2::*;
+pub use crate::fluid_sim_renderer_trait::FluidSimRenderer;
 
 mod spatial_hash;
 mod spatial_hash_iter;
@@ -22,3 +22,4 @@ mod fluid_sim;
 mod shape;
 mod rect;
 mod vector_2;
+mod fluid_sim_renderer_trait;
