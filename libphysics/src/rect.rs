@@ -17,7 +17,7 @@ pub struct Rect {
 // this also supports rotation byb rotating the particle around the rect which is in the demo code
 // how to calculate how to push the particle out of the shape?
 impl Shape for Rect {
-    fn collide_with(&self, circle: &mut Particle, properties: &Properties) {
+    fn collide_with(&self, circle: &mut Particle, _properties: &Properties) {
         let circle_pos = rotate_point_around(circle.pos, self.pos, -self.rotation); 
 
         const RADIUS: f32 = 1.0;

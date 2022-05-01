@@ -1,7 +1,6 @@
 use sdl2::Sdl;
 use sdl2::video::WindowPos;
 use sdl2::render::WindowCanvas;
-use sdl2::video::Window;
 
 pub struct SdlSystem {
     pub sdl_context: Sdl,
@@ -20,7 +19,7 @@ impl SdlSystem {
             .expect("could not initialize video subsystem");
         window.set_position(WindowPos::Positioned(0), WindowPos::Positioned(0)); // easy to debug
 
-        let mut canvas = window.into_canvas().build()
+        let canvas = window.into_canvas().build()
             .expect("could not make a canvas");
 
         SdlSystem {
@@ -29,7 +28,7 @@ impl SdlSystem {
             canvas
         }
     }
-
+/*
     pub fn run_event_loop<F: Fn(f32)>(&mut self, update: F) {
         let mut event_pump = self.sdl_context.event_pump().unwrap();
 /*
@@ -58,5 +57,5 @@ impl SdlSystem {
             ::std::thread::sleep(Duration::from_millis(SLEEP_PER_FRAME_MS));
             //::std::thread::sleep(Duration::from::new(0, 1_000_000_000u32 / 60));
         }*/
-    } 
+    } */
 }

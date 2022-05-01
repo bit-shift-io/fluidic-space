@@ -74,7 +74,6 @@ impl FluidSim {
     }
 
     pub fn update(&mut self, dt: f32) {
-        let damping: f32x2 = vec2_from_single(self.properties.damping);
         let dt2: f32x2 = vec2_from_single(dt);
 
         // compute particle contacts

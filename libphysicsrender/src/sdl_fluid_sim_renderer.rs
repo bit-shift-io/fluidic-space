@@ -1,16 +1,9 @@
 use sdl2::rect::Point;
 use sdl2::rect::Rect as SDLRect;
 use sdl2::pixels::Color;
-use sdl2::event::Event;
-use sdl2::keyboard::Keycode;
 use sdl2::render::WindowCanvas;
 use sdl2::gfx::primitives::DrawRenderer;
 
-use std::cell::RefCell;
-
-use libphysics::FluidSimRenderer;
-use libphysics::Particle;
-use libphysics::Rect;
 use libphysics::FluidSim;
 use libphysics::*;
 
@@ -52,10 +45,10 @@ fn draw_rect_rotate(canvas: &mut WindowCanvas, rect: &libphysics::Rect, scale: f
     let top_right_pt = Point::new(top_right_rotated[0] as i32, top_right_rotated[1] as i32);
     let bottom_left_pt = Point::new(bottom_left_rotated[0] as i32, bottom_left_rotated[1] as i32);
 
-    canvas.draw_line(top_left_pt, top_right_pt);
-    canvas.draw_line(top_right_pt, bottom_right_pt);
-    canvas.draw_line(bottom_right_pt, bottom_left_pt);
-    canvas.draw_line(bottom_left_pt, top_left_pt);
+    canvas.draw_line(top_left_pt, top_right_pt).ok();
+    canvas.draw_line(top_right_pt, bottom_right_pt).ok();
+    canvas.draw_line(bottom_right_pt, bottom_left_pt).ok();
+    canvas.draw_line(bottom_left_pt, top_left_pt).ok();
 }
 
 
@@ -72,7 +65,7 @@ impl /*FluidSimRenderer for*/ SdlFluidSimRenderer/*<'_>*/ {
 
     pub fn draw(&self) {
         unsafe {
-            const draw_grid: bool = false;
+            let draw_grid: bool = false;
 
             let canvas: &mut WindowCanvas = &mut *self.canvas;
             let fluid_sim: &mut FluidSim = &mut *self.fluid_sim;
@@ -80,9 +73,9 @@ impl /*FluidSimRenderer for*/ SdlFluidSimRenderer/*<'_>*/ {
             // set up scaling to render the grid to fit to window height
             let window = canvas.window();
             let (_w_width, w_height) = window.size();
-            const padding: f32 = 20.0;
-            const x_offset: f32 = padding;
-            const y_offset: f32 = padding;
+            let padding: f32 = 20.0;
+            let x_offset: f32 = padding;
+            let y_offset: f32 = padding;
             let scale: f32 = ((w_height as f32) - (padding * 2.0)) / (fluid_sim.spatial_hash.y_size as f32);
             let offset = vec2(x_offset, y_offset);
         
@@ -97,7 +90,7 @@ impl /*FluidSimRenderer for*/ SdlFluidSimRenderer/*<'_>*/ {
             let rect = SDLRect::new(x_offset as i32, y_offset as i32, width, height);
         
             canvas.set_draw_color(Color::RGBA(255, 0, 0, 255));
-            canvas.draw_rect(rect);
+            canvas.draw_rect(rect).ok();
 
             if draw_grid {
                 canvas.set_draw_color(Color::RGBA(255, 0, 0, 100));
@@ -109,7 +102,7 @@ impl /*FluidSimRenderer for*/ SdlFluidSimRenderer/*<'_>*/ {
                         let w = (1.0 * scale) as u32;
                         let h = (1.0 * scale) as u32;
                         let rect = SDLRect::new(x_start, y_start, w, h);
-                        canvas.draw_rect(rect);
+                        canvas.draw_rect(rect).ok();
                     }
                 }
             }
@@ -125,7 +118,7 @@ impl /*FluidSimRenderer for*/ SdlFluidSimRenderer/*<'_>*/ {
                 let y2 = particle.pos[1] * scale + y_offset;
                 let radius2 = 1.0 * scale;
         
-                canvas.circle(x2 as i16, y2 as i16, radius2 as i16, Color::RGBA(0, 255, 0, 255));
+                canvas.circle(x2 as i16, y2 as i16, radius2 as i16, Color::RGBA(0, 255, 0, 255)).ok();
             }
         
             canvas.present();

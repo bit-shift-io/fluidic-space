@@ -1,51 +1,30 @@
 pub use core_simd::*;
 
-/*
-//pub type Vector2 = f32x2;
-
-pub struct Vector2(f32x2);
-
-impl Vector2 {
-    pub fn new(x: f32, y: f32) -> Vector2 {
-        Vector2 {
-            0: Simd::from_array([x, y])
-        }
-    }
-
-    pub fn from_f32x2(v: f32x2) -> Vector2 {
-        Vector2 {
-            0: v
-        }
-    }
-
-    pub fn length_squared(&self) -> f32 {
-        let dist_m_dist = self.0 * self.0;
-        let dist_sqrd: f32 = dist_m_dist[0] + dist_m_dist[1]; //(dist * dist).horizontal_sum();// //(dist[0] * dist[0]) + (dist[1] * dist[1]);
-        return dist_sqrd;
-    }
-}
-*/
-
+#[inline(always)]
 pub fn vec2(x: f32, y: f32) -> f32x2 {
     return Simd::from_array([x, y])
 }
 
+#[inline(always)]
 pub fn vec2_from_single(v: f32) -> f32x2 {
     return Simd::from_array([v, v])
 }
 
+#[inline(always)]
 pub fn length_squared(v: f32x2) -> f32 {
     let dist_m_dist = v * v;
     let dist_sqrd: f32 = dist_m_dist[0] + dist_m_dist[1]; //(dist * dist).horizontal_sum();// //(dist[0] * dist[0]) + (dist[1] * dist[1]);
     return dist_sqrd;
 }
 
+#[inline(always)]
 pub fn dot(a: f32x2, b: f32x2) -> f32 {
     let m = a * b;
     return m[0] + m[1];
 }
 
 // https://math.stackexchange.com/questions/13261/how-to-get-a-reflection-vector
+#[inline(always)]
 pub fn reflect(v: f32x2, n: f32x2) -> f32x2 {
     // v = incoming velocity
     // n = normal
@@ -58,6 +37,7 @@ pub fn reflect(v: f32x2, n: f32x2) -> f32x2 {
 }
 
 // project a onto b
+#[inline(always)]
 pub fn project(a: f32x2, b: f32x2) -> f32x2 {
     // https://www.omnicalculator.com/math/vector-projection
     // p = (a·b / b·b) * b
@@ -66,6 +46,7 @@ pub fn project(a: f32x2, b: f32x2) -> f32x2 {
 }
 
 // counterclockwise rotation
+#[inline(always)]
 pub fn rotate_vector(v: f32x2, angle_rad: f32) -> f32x2 {
     let c = angle_rad.cos();
     let s = angle_rad.sin();
@@ -77,8 +58,9 @@ pub fn rotate_vector(v: f32x2, angle_rad: f32) -> f32x2 {
 }
 
 // rotate pt around origin by a given angle (in radians)
+#[inline(always)]
 pub fn rotate_point_around(pt: f32x2, origin: f32x2, angle_rad: f32) -> f32x2 {
-    let mut delta = pt - origin; 
+    let delta = pt - origin; 
     let rotated = rotate_vector(delta, angle_rad);
     let new_pt = origin + rotated;
     return new_pt;

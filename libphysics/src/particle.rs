@@ -41,7 +41,7 @@ impl Particle {
     // https://www.gamedeveloper.com/disciplines/simple-intersection-tests-for-games
     //
     #[inline(always)]
-    pub fn check_particle_collisions(&mut self, cell_it: &SpatialHashIter, properties: &Properties, dt: f32x2) {
+    pub fn check_particle_collisions(&mut self, cell_it: &SpatialHashIter, properties: &Properties, _dt: f32x2) {
         // clear last frame contacts
         self.contacts.clear();
 
@@ -97,7 +97,7 @@ impl Particle {
     }
 
     #[inline(always)]
-    pub fn update_velocity(&mut self, spatial_hash: &SpatialHash, properties: &Properties, dt: f32x2) {
+    pub fn update_velocity(&mut self, _spatial_hash: &SpatialHash, properties: &Properties, dt: f32x2) {
         // add gravity
         self.vel += properties.gravity * dt;
 

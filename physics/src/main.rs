@@ -6,8 +6,9 @@
 
 use sdl2::event::Event;
 use sdl2::keyboard::Keycode;
-use std::time::Duration;
+//use std::time::Duration;
 use core_simd::*;
+use std::time::Instant;
 
 use libphysics::*;
 use libphysicsrender::*;
@@ -18,7 +19,7 @@ fn main() -> Result<(), String> {
 
     const GRID_SIZE: usize = 100;
     const PARTICLE_COUNT: usize = 400;
-    const SLEEP_PER_FRAME_MS: u64 = 0;
+    //const SLEEP_PER_FRAME_MS: u64 = 0;
 
     let mut fluid_sim = FluidSim::new(GRID_SIZE, GRID_SIZE);
 
@@ -29,7 +30,7 @@ fn main() -> Result<(), String> {
     // so we want a high velocity when in contact really close, but as we mov out the velocity is dampened/drained
     // and the push away force also grows less, this *should* maybe help particle push out without having such extreme
     // velocities once they 'disconnect'
-    fluid_sim.properties.gravity = vec2(0.0, 98.0);
+    fluid_sim.properties.gravity = vec2(0.0, 9.8); //98.0);
 
     /*
     fluid_sim.shapes.push(
@@ -65,7 +66,11 @@ fn main() -> Result<(), String> {
     let fluid_sim_renderer = SdlFluidSimRenderer::new(&mut fluid_sim, &mut sdl.canvas);
 
     let mut event_pump = sdl.sdl_context.event_pump()?;
+    let mut dt = 0.001;
+
     'running: loop {
+        let start = Instant::now();
+
         // Handle events
         for event in event_pump.poll_iter() {
             match event {
@@ -78,14 +83,19 @@ fn main() -> Result<(), String> {
         }
 
         // Update
-        fluid_sim.update(0.001);
+        fluid_sim.update(dt);
 
         // Render
         fluid_sim_renderer.draw();
 
+        let duration = start.elapsed();
+        dt = duration.as_nanos() as f32 / 1000000000.0;
+
+        //println!("dt: {:?}", dt);
+
         // Time management!
         //Duration::from_millis(1000)
-        ::std::thread::sleep(Duration::from_millis(SLEEP_PER_FRAME_MS));
+        //::std::thread::sleep(Duration::from_millis(SLEEP_PER_FRAME_MS));
         //::std::thread::sleep(Duration::from::new(0, 1_000_000_000u32 / 60));
     }
 
